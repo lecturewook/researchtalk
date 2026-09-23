@@ -1,0 +1,16 @@
+{
+  "name": "researchtalk",
+  "version": "1.0.0",
+  "private": true,
+  "description": "여섯 명이 함께 쓰는 일정과 대화 PWA",
+  "scripts": {
+    "dev": "vite",
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "vite": "8.0.13"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.117.0"
+  }
+}
