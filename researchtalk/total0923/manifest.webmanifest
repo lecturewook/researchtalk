@@ -2,7 +2,7 @@
   "id": "./",
   "name": "researchtalk",
   "short_name": "researchtalk",
-  "description": "여섯 명의 일정과 할 일, 단체 대화와 개인 대화",
+  "description": "6 independent researchers",
   "lang": "ko-KR",
   "dir": "ltr",
   "start_url": "./",
