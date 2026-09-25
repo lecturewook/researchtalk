@@ -1,6 +1,6 @@
 /* 화면 파일을 바꿔 배포할 때 CACHE_VERSION도 바꾸면 새 오프라인 파일을 준비해요. */
 'use strict';
-const CACHE_VERSION = 'researchtalk-shell-v5-enter-badge';
+const CACHE_VERSION = 'researchtalk-shell-v6-excel';
 const BASE = self.registration.scope;
 const ASSETS = [
   './', './index.html',
