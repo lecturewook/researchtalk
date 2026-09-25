@@ -1,27 +1,1293 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#107c41">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="researchtalk">
-  <meta name="description" content="연구사업 관리표, 일정, 할 일과 대화">
-  <meta name="referrer" content="no-referrer">
-  <title>researchtalk</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#107c41" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="researchtalk" />
+  <meta name="description" content="연구사업단 일정, 할 일, 단체 대화와 개인 대화" />
+  <meta name="referrer" content="no-referrer" />
+  <title>연구사업단_과제관리_월별현황.xlsx · researchtalk</title>
 
-  <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
-  <link rel="icon" href="./icons/favicon-32.png" sizes="32x32">
-  <link rel="stylesheet" href="./styles.css">
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+  <link rel="icon" href="./icons/favicon-32.png" sizes="32x32" />
+  <link rel="stylesheet" href="./styles.css?ui=compact-20260925" />
 
-  <script defer src="./vendor/supabase.js"></script>
-  <script defer src="./dates.js"></script>
-  <script defer src="./config.js"></script>
-  <script defer src="./storage.js"></script>
-  <script defer src="./summary.js"></script>
-  <script defer src="./app.js"></script>
+  <script defer src="./vendor/supabase.js?ui=compact-20260925"></script>
+  <script defer src="./dates.js?ui=compact-20260925"></script>
+  <script defer src="./config.js?ui=compact-20260925"></script>
+  <script defer src="./storage.js?ui=compact-20260925"></script>
+  <script defer src="./summary.js?ui=compact-20260925"></script>
+  <script defer src="./app.js?ui=compact-20260925"></script>
+
+<style id="xl-compact-style">
+:root{
+  --bg:#f6f6f6;
+  --paper:#fff;
+  --ink:#202020;
+  --muted:#757575;
+  --line:#d5d5d5;
+  --primary:#107c41;
+  --soft:#e9f2eb;
+  --rose:#c14f65;
+  --green:#107c41;
+  font-family:"Malgun Gothic","맑은 고딕",Arial,sans-serif;
+}
+
+body,.app-frame,.auth-screen,.chat-scroll{
+  background-image:none!important;
+}
+
+.app-frame{background:#fff}
+
+.panel,.room-chip,.message-bubble,.mine .message-bubble{
+  border-radius:2px;
+  box-shadow:none;
+}
+
+.xl-chrome,.xl-formula,#xl-sheet,.xl-letters,
+.xl-pane-tools,.xl-pane-foot,.xl-mobile-close{
+  display:none;
+}
+
+.app-header{
+  background:#107c41;
+  color:#fff;
+  border:0;
+}
+
+.brand{color:#fff}
+
+.brand-mark{
+  border-radius:2px;
+  background:#fff;
+  color:#107c41;
+}
+
+.xl-quick,.xl-filename,.xl-window,.xl-title-search{
+  display:none;
+}
+
+.app-header .avatar{
+  background:#e0eee3;
+  color:#075c2e;
+}
+
+.connection-line{background:#f4f4f4}
+.bottom-nav{background:#f4f4f4}
+.bottom-nav button{border-radius:0}
+
+.bottom-nav button[aria-current=page]{
+  background:#fff;
+  border-bottom:3px solid #107c41;
+}
+
+.xl-more{
+  background:#fff;
+  border-bottom:1px solid var(--line);
+  flex-shrink:0;
+  max-height:30%;
+  overflow:auto;
+}
+
+.xl-more summary{
+  padding:9px 14px;
+  min-height:44px;
+  font-size:12px;
+  cursor:pointer;
+  color:#555;
+}
+
+.xl-unread{
+  border:1px solid #dfb9bf;
+  color:#b42f42;
+  background:#fff;
+  font-size:12px;
+  padding:5px 8px;
+  border-radius:2px;
+}
+
+.xl-mobile-open{
+  display:block;
+  width:100%;
+  border:1px solid var(--line);
+  background:#fff;
+  color:#107c41;
+  margin:8px 0;
+}
+
+.chat-scroll{background:#f8f8f8}
+.mine .message-bubble{background:#eef6ef}
+.calendar-key{gap:4px 8px}
+.xl-pivot-scroll{min-height:0}
+.xl-status-note{display:none}
+.composer textarea{min-width:0;flex:1}
+
+@media(min-width:1100px){
+  body{
+    font-size:13px;
+    line-height:1.45;
+    background:#fff;
+  }
+
+  .app-frame{
+    max-width:none;
+    border:0;
+    box-shadow:none;
+    height:100vh;
+    height:var(--app-height,100dvh);
+  }
+
+  /* 초록색 제목 표시줄 */
+  .app-header{
+    height:36px;
+    min-height:36px;
+    padding:0 10px;
+    gap:16px;
+    justify-content:flex-start;
+    flex-shrink:0;
+  }
+
+  .brand{min-height:26px;gap:0}
+  .brand>span:last-child{display:none}
+
+  .brand-mark{
+    font-family:Arial,sans-serif;
+    width:23px;
+    height:25px;
+    font-size:18px;
+    font-weight:700;
+  }
+
+  .app-header .avatar{
+    width:25px;
+    height:25px;
+    min-height:25px;
+    font-size:12px;
+    border:1px solid #dce9df;
+    background:#ffffff15;
+    color:white;
+  }
+
+  .xl-quick,.xl-window{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    white-space:nowrap;
+    font-size:13px;
+  }
+
+  .xl-toggle{
+    display:inline-block;
+    width:29px;
+    height:15px;
+    border:1px solid white;
+    border-radius:12px;
+    vertical-align:middle;
+    margin-inline:4px;
+  }
+
+  .xl-toggle:before{
+    content:"";
+    display:block;
+    width:9px;
+    height:9px;
+    margin:2px;
+    background:white;
+    border-radius:50%;
+  }
+
+  .xl-filename{
+    display:block;
+    white-space:nowrap;
+    font-size:13px;
+  }
+
+  .xl-title-search{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex:1;
+    max-width:580px;
+    min-width:80px;
+    height:27px;
+    padding:0 10px;
+    background:#ffffff24;
+    border:1px solid #ffffff25;
+    border-radius:5px;
+    color:#f5fff8;
+    font-size:13px;
+  }
+
+  .xl-title-search .icon{width:17px;height:17px}
+  .xl-window{margin-left:auto;gap:25px;font-size:15px}
+  .xl-window span:first-child{font-size:12px}
+
+  /* 엑셀 메뉴와 리본 */
+  .xl-chrome{
+    display:block;
+    flex-shrink:0;
+    background:#fff;
+    color:#171717;
+  }
+
+  .xl-menubar{
+    height:34px;
+    display:flex;
+    align-items:center;
+    padding:0 12px;
+    gap:2px;
+    border-bottom:1px solid #eee;
+  }
+
+  .xl-menubar button{
+    font-size:13px;
+    padding:0 13px;
+    min-height:30px;
+    height:30px;
+    white-space:nowrap;
+    border-radius:0;
+    position:relative;
+  }
+
+  .xl-menubar .selected{
+    color:#107c41;
+    font-weight:bold;
+  }
+
+  .xl-menubar .selected:after{
+    content:"";
+    position:absolute;
+    bottom:1px;
+    left:12px;
+    right:12px;
+    height:3px;
+    background:#107c41;
+    border-radius:2px;
+  }
+
+  .xl-menubar .xl-share{
+    background:#107c41;
+    color:#fff;
+    margin-left:5px;
+    border-radius:3px;
+    height:26px;
+    min-height:26px;
+  }
+
+  .xl-menubar .xl-comment{
+    margin-left:auto;
+    border:1px solid #ccc;
+    border-radius:3px;
+    height:26px;
+    min-height:26px;
+  }
+
+  .xl-chrome button:disabled{opacity:1;color:inherit}
+  .xl-chrome button{cursor:default}
+  .xl-menubar .selected:disabled{color:#107c41}
+  .xl-menubar .xl-share:disabled{color:#fff}
+
+  .xl-ribbon-scroll{
+    overflow-x:auto;
+    scrollbar-width:thin;
+    scrollbar-color:#c4c4c4 #fff;
+  }
+
+  .xl-ribbon{
+    display:flex;
+    height:102px;
+    min-width:1420px;
+    padding:7px 0 2px;
+    overflow:hidden;
+  }
+
+  .xl-group{
+    position:relative;
+    display:flex;
+    gap:7px;
+    padding:0 10px 20px;
+    border-right:1px solid #ddd;
+    flex-shrink:0;
+    font-size:12px;
+  }
+
+  .xl-group>small{
+    position:absolute;
+    bottom:0;
+    left:0;
+    right:0;
+    text-align:center;
+    color:#858585;
+    font-size:11px;
+  }
+
+  .xl-group>small:after{
+    content:"⌁";
+    position:absolute;
+    right:5px;
+    color:#777;
+  }
+
+  .xl-group button{
+    min-height:23px;
+    padding:1px 3px;
+    font-size:13px;
+    line-height:1.4;
+    border-radius:0;
+    text-align:left;
+  }
+
+  .xl-group .big{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    justify-content:center;
+    gap:3px;
+    min-width:41px;
+  }
+
+  .xl-group .big b{
+    font-size:23px;
+    font-weight:400;
+    line-height:1.2;
+    color:#597995;
+  }
+
+  .xl-stack{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:1px;
+  }
+
+  .xl-row{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    white-space:nowrap;
+    min-height:29px;
+  }
+
+  .xl-box{
+    border:1px solid #aaa;
+    background:#fff;
+    border-radius:1px;
+    padding:3px 7px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    height:25px;
+    font-size:12px;
+  }
+
+  .xl-font{font-size:16px}
+  .xl-font .bold{font-weight:bold}
+  .xl-font .under{text-decoration:underline}
+  .xl-font .color{border-bottom:3px solid #f13642}
+  .xl-font .fill{border-bottom:3px solid #f3d76d}
+
+  .xl-undo{width:53px;justify-content:center;color:#47719c}
+  .xl-clip{width:145px}
+  .xl-fonts{width:246px}
+  .xl-align{width:274px}
+  .xl-number{width:154px}
+  .xl-styles{width:201px}
+  .xl-cells{width:93px}
+  .xl-edit{flex:1;border:0}
+
+  /* 수식 표시줄 */
+  .xl-formula{
+    display:flex;
+    align-items:center;
+    height:28px;
+    min-height:28px;
+    border-block:1px solid #cfcfcf;
+    background:#fff;
+    gap:12px;
+    font-size:12px;
+  }
+
+  #xl-cell{
+    width:114px;
+    border-right:1px solid #ccc;
+    height:26px;
+    line-height:26px;
+    padding:0 10px;
+    flex-shrink:0;
+  }
+
+  #xl-cell:after{content:"▾";float:right;color:#777}
+  .xl-formula>span{color:#aaa}
+
+  .xl-formula em{
+    font:bold italic 16px Georgia,serif;
+    color:#555;
+  }
+
+  .xl-formula output{
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    overflow:hidden;
+    flex:1;
+    border-left:1px solid #eee;
+    padding-left:10px;
+  }
+
+  /* A–G / H–I / J */
+  #workspace:not([hidden]){
+    display:grid;
+    grid-template-columns:
+      minmax(0,66.5fr)
+      minmax(0,15.3fr)
+      minmax(0,18.2fr);
+    grid-template-rows:minmax(0,1fr);
+    position:relative;
+    gap:0;
+    overflow:hidden;
+    background:#fff;
+  }
+
+  /* 왼쪽 연구사업 표 */
+  #xl-sheet{
+    display:flex;
+    grid-column:1;
+    grid-row:1;
+    min-height:0;
+    min-width:0;
+    flex-direction:column;
+    border-right:1px solid #bbb;
+  }
+
+  .xl-table-scroll{
+    flex:1;
+    min-height:0;
+    overflow:auto;
+    scrollbar-width:thin;
+    background:repeating-linear-gradient(
+      #fff 0 23px,
+      #d8d8d8 23px 24px
+    );
+  }
+
+  .xl-table{
+    border-collapse:separate;
+    border-spacing:0;
+    table-layout:fixed;
+    width:100%;
+    font-size:12px;
+    color:#252525;
+    background:white;
+    font-variant-numeric:tabular-nums;
+  }
+
+  .xl-table th,.xl-table td{
+    height:24px;
+    padding:0 8px;
+    border-right:1px solid #d6d6d6;
+    border-bottom:1px solid #d6d6d6;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-weight:400;
+  }
+
+  .xl-table thead th{
+    position:sticky;
+    top:0;
+    height:24px;
+    background:#fafafa;
+    color:#626262;
+    text-align:center;
+    z-index:2;
+    font-size:12px;
+  }
+
+  .xl-table thead th:first-child{background:#ebeeee}
+
+  .xl-table tbody th{
+    background:#fafafa;
+    color:#777;
+    text-align:center;
+    padding:0;
+    font-size:12px;
+  }
+
+  .xl-table tr:first-child td{
+    background:#fafafa;
+    font-size:11px;
+    color:#454545;
+  }
+
+  .xl-table td:nth-child(n+4):nth-child(-n+7){
+    text-align:right;
+  }
+
+  .xl-table td:last-child{text-align:center}
+
+  .xl-table td[tabindex="0"]{
+    outline:2px solid #107c41;
+    outline-offset:-2px;
+  }
+
+  .xl-table td:focus{box-shadow:none}
+  .xl-table .up{color:#cb5267}
+  .xl-table .down{color:#567aac}
+  .xl-table .xl-header{color:#444!important}
+
+  .xl-ticker{
+    height:26px;
+    min-height:26px;
+    padding:3px 9px;
+    border-block:1px solid #d5d5d5;
+    overflow:hidden;
+    white-space:nowrap;
+    font-size:11px;
+    color:#777;
+    background:#fff;
+  }
+
+  .xl-ticker b{
+    font-weight:400;
+    color:#cb5267;
+    margin-right:20px;
+  }
+
+  .xl-sheet-tools{
+    height:38px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:4px 6px;
+    background:#fafafa;
+    flex-shrink:0;
+    overflow:hidden;
+  }
+
+  .xl-sheet-tools input{
+    min-height:28px;
+    height:28px;
+    padding:4px 7px;
+    border-radius:0;
+    background:white;
+    font-size:12px;
+    width:225px;
+    max-width:35%;
+  }
+
+  .xl-sheet-tools button{
+    min-height:28px;
+    height:28px;
+    padding:3px 11px;
+    border:1px solid #ccc;
+    border-radius:0;
+    font-size:11px;
+    white-space:nowrap;
+  }
+
+  .xl-sheet-tools .active{
+    font-weight:bold;
+    background:#fff;
+    border-bottom:2px solid #107c41;
+  }
+
+  .xl-sheet-tools small{
+    margin-left:auto;
+    color:#777;
+    font-size:10px;
+    white-space:nowrap;
+  }
+
+  /* H–I 피벗 패널 */
+  #workspace #page-home{
+    display:flex!important;
+    grid-column:2;
+    grid-row:1;
+    flex-direction:column;
+    overflow:hidden;
+    padding:0;
+    min-width:0;
+    min-height:0;
+    background:#fff;
+    border-right:1px solid #bbb;
+  }
+
+  .xl-letters{
+    display:flex;
+    align-items:center;
+    flex-shrink:0;
+    height:24px;
+    min-height:24px;
+    background:#fafafa;
+    border-bottom:1px solid #cfcfcf;
+    text-align:center;
+    font-size:12px;
+    color:#626262;
+  }
+
+  .xl-letters span{
+    flex:1;
+    border-right:1px solid #d5d5d5;
+  }
+
+  .xl-letters span:last-child{border:0}
+
+  .xl-pane-tools{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    min-height:26px;
+    padding:3px 7px;
+    border-bottom:1px solid #d8d8d8;
+    background:#f5f8f6;
+    font-size:11px;
+  }
+
+  .xl-pane-tools strong{font-size:11px}
+  .xl-pane-tools span{color:#777}
+
+  .xl-pivot-scroll{
+    flex:1;
+    overflow-y:auto;
+    scrollbar-width:thin;
+    padding:6px;
+    background-image:
+      linear-gradient(#e5e7e94d 1px,transparent 1px),
+      linear-gradient(90deg,#e5e7e94d 1px,transparent 1px);
+    background-size:28px 24px;
+  }
+
+  #page-home .today-heading{display:none}
+
+  #page-home .panel{
+    padding:7px;
+    margin:0 0 8px;
+    border:1px solid #cfcfcf;
+    border-radius:0;
+    background:#fff;
+    box-shadow:none;
+    position:relative;
+  }
+
+  #page-home .calendar-panel{
+    border-top:2px solid #107c41;
+  }
+
+  #page-home .panel:after{
+    content:"";
+    position:absolute;
+    bottom:-3px;
+    right:-3px;
+    width:5px;
+    height:5px;
+    background:#fff;
+    border:1px solid #aeb5b0;
+    pointer-events:none;
+  }
+
+  #page-home .section-heading{
+    gap:3px;
+    padding:0;
+    flex-wrap:wrap;
+  }
+
+  #page-home h2{
+    font-size:12px;
+    letter-spacing:0;
+    line-height:1.5;
+  }
+
+  #page-home .eyebrow{
+    font-size:10px;
+    color:#858585;
+    margin-bottom:0;
+  }
+
+  #page-home button{border-radius:1px}
+
+  #page-home .text-button{
+    min-height:24px;
+    padding:2px 3px;
+    font-size:10px;
+  }
+
+  #page-home .icon-button{
+    width:21px;
+    min-width:21px;
+    min-height:24px;
+    font-size:20px;
+  }
+
+  #page-home .soft-button{
+    min-height:24px;
+    padding:2px 5px;
+    font-size:10px;
+  }
+
+  #page-home .weekdays,
+  #page-home .calendar-grid{
+    grid-template-columns:repeat(7,minmax(0,1fr));
+  }
+
+  #page-home .weekdays{
+    font-size:10px;
+    padding:7px 0 3px;
+  }
+
+  #page-home .calendar-day{
+    min-width:0;
+    min-height:27px;
+    height:27px;
+    padding:0 0 3px;
+    font-size:11px;
+    border-radius:0;
+  }
+
+  #page-home .calendar-day.today{
+    box-shadow:inset 0 0 0 1px #87a895;
+  }
+
+  #page-home .calendar-day.selected{box-shadow:none}
+
+  #page-home .calendar-key{
+    font-size:9px;
+    gap:3px 6px;
+    padding:6px 0 0;
+    justify-content:flex-start;
+  }
+
+  .calendar-legend i{width:5px;height:5px}
+
+  #page-home .calendar-day.has-event:after,
+  #page-home .calendar-day.has-my-event:before{
+    width:4px;
+    height:4px;
+    bottom:3px;
+  }
+
+  #page-home .count-badge{
+    font-size:10px;
+    padding:1px 4px;
+    border-radius:1px;
+  }
+
+  #page-home .todo-list{margin:5px 0}
+  #page-home .todo-row{padding:2px 0;gap:2px}
+
+  #page-home .todo-toggle{
+    min-height:27px;
+    font-size:11px;
+    gap:6px;
+    padding:2px 0;
+  }
+
+  #page-home .check-box{
+    width:14px;
+    height:14px;
+    border-radius:0;
+    border-width:1px;
+  }
+
+  #page-home .check-box .icon{width:12px;height:12px}
+
+  #page-home .delete-button{
+    min-height:25px;
+    width:22px;
+    min-width:22px;
+  }
+
+  #page-home .delete-button .icon{width:12px;height:12px}
+  #page-home .inline-form{gap:3px}
+
+  #page-home .inline-form input{
+    min-height:27px;
+    height:27px;
+    border-radius:0;
+    font-size:11px;
+    padding:3px 5px;
+    background:white;
+  }
+
+  #page-home .square-button{
+    min-height:27px;
+    min-width:25px;
+    width:25px;
+    font-size:18px;
+  }
+
+  #page-home .empty{
+    font-size:11px;
+    padding:12px 2px;
+    line-height:1.6;
+  }
+
+  #page-home .event-list{margin-top:6px}
+
+  #page-home .event-row{
+    gap:5px;
+    padding:7px 0;
+    flex-wrap:wrap;
+  }
+
+  #page-home .event-date{
+    font-size:9px;
+    min-width:27px;
+    padding:2px;
+    border-radius:0;
+  }
+
+  #page-home .event-date strong{font-size:14px}
+  #page-home .event-content strong{font-size:11px}
+  #page-home .event-content p{font-size:10px}
+
+  #page-home .event-edit{
+    font-size:10px;
+    min-height:22px;
+    min-width:25px;
+    padding:2px;
+  }
+
+  #page-home .selected-events{
+    font-size:10px;
+    padding:4px;
+    border-radius:0;
+    margin-top:5px;
+  }
+
+  .xl-pane-foot{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    height:38px;
+    min-height:38px;
+    padding:3px 6px;
+    background:#fafafa;
+    border-top:1px solid #ccc;
+    flex-shrink:0;
+  }
+
+  .xl-pane-foot button{
+    min-height:28px;
+    font-size:10px;
+    border-radius:0;
+    white-space:nowrap;
+    padding:2px 6px;
+  }
+
+  .xl-pane-foot .active{
+    border-bottom:2px solid #107c41;
+    color:#107c41;
+    font-weight:bold;
+  }
+
+  /* J 대화 패널 */
+  #workspace #page-chat{
+    display:flex!important;
+    grid-column:3;
+    grid-row:1;
+    min-width:0;
+    min-height:0;
+    padding:0;
+    background:#fafafa;
+    border:0;
+    overflow:hidden;
+  }
+
+  .chat-top{
+    padding:4px 7px 0;
+    border:0;
+    background:#fff;
+  }
+
+  .chat-top .section-heading{gap:4px;flex-wrap:wrap}
+  .chat-top h1{font-size:11px;letter-spacing:0}
+
+  .chat-top .soft-button{
+    min-height:23px;
+    padding:2px 5px;
+    font-size:10px;
+    border-radius:1px;
+    background:#f1f6f2;
+  }
+
+  .room-list{
+    gap:4px;
+    margin:3px -7px 0;
+    padding:0 7px 4px;
+  }
+
+  .room-chip{
+    min-height:25px;
+    padding:2px 7px;
+    font-size:11px;
+    border-radius:0;
+  }
+
+  .unread-dot{
+    width:6px;
+    height:6px;
+    margin-left:4px;
+    box-shadow:none;
+  }
+
+  .chat-context{
+    padding:5px 7px;
+    gap:3px;
+    flex-wrap:wrap;
+    background:#f5f8f6;
+  }
+
+  .chat-context strong{font-size:11px}
+  .chat-context p{font-size:9px}
+
+  .chat-context .text-button{
+    min-height:22px;
+    font-size:10px;
+    padding:2px 0;
+  }
+
+  .xl-more summary{
+    min-height:23px;
+    padding:3px 7px;
+    font-size:10px;
+    color:#777;
+  }
+
+  .xl-more .chat-tools{padding:0 4px;gap:0}
+
+  .xl-more .chat-tools input{
+    min-height:27px;
+    height:27px;
+    font-size:11px;
+    width:116px;
+    padding:2px;
+  }
+
+  .xl-more .text-button{
+    min-height:24px;
+    font-size:10px;
+    padding:2px 4px;
+  }
+
+  .xl-more .archive-state{
+    font-size:10px;
+    padding:2px 7px;
+    text-align:left;
+  }
+
+  .xl-more .summary-open{
+    min-height:24px;
+    font-size:10px;
+    padding:2px 7px;
+  }
+
+  .xl-unread{
+    min-height:23px;
+    font-size:10px;
+    padding:2px 5px;
+    border:0;
+    flex-shrink:0;
+  }
+
+  .chat-scroll{
+    padding:8px;
+    scrollbar-width:thin;
+    background:#fafafa;
+  }
+
+  .chat-messages{gap:8px}
+
+  .message,.message.mine{
+    display:block;
+    background:#fff;
+    border:1px solid #dcdcdc;
+    padding:7px 8px;
+  }
+
+  .message .avatar{display:none}
+
+  .message-main{
+    max-width:none;
+    width:100%;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:3px 5px;
+  }
+
+  .message-author,.message.mine .message-author{
+    grid-column:1;
+    grid-row:1;
+    text-align:left;
+    font-size:11px;
+    font-weight:700;
+    color:#107c41;
+    margin:0;
+    overflow-wrap:anywhere;
+  }
+
+  .message-bubble,.mine .message-bubble{
+    grid-column:1/-1;
+    grid-row:2;
+    font-size:12px;
+    line-height:1.5;
+    padding:0;
+    border:0;
+    border-radius:0;
+    background:transparent;
+    color:#252525;
+  }
+
+  .message-meta,.mine .message-meta{
+    grid-column:2;
+    grid-row:1;
+    justify-content:flex-end;
+    align-items:flex-start;
+    flex-wrap:wrap;
+    font-size:9px;
+    margin:0;
+    gap:3px;
+    color:#8b9398;
+  }
+
+  .message-delete{
+    min-height:15px;
+    height:15px;
+    font-size:9px;
+    padding:0;
+    color:#888;
+  }
+
+  .chat-scroll .empty{
+    font-size:12px;
+    padding:28px 5px;
+    color:#888;
+  }
+
+  .unread-divider{
+    font-size:10px;
+    padding:5px;
+    margin:3px 0;
+    border-radius:0;
+  }
+
+  .summary-card{
+    font-size:11px;
+    border-radius:0;
+    padding:8px;
+  }
+
+  .summary-card h3,.summary-card p{font-size:11px}
+
+  .new-message-hint{
+    min-height:25px;
+    font-size:10px;
+    margin:0 7px 5px;
+    padding:4px 7px;
+    border-radius:1px;
+  }
+
+  .composer-wrap{
+    padding:6px 7px;
+    background:#fafafa;
+  }
+
+  .composer{gap:5px}
+
+  .composer textarea{
+    min-height:31px;
+    height:31px;
+    padding:5px 7px;
+    font-size:12px;
+    line-height:1.5;
+    border-radius:2px;
+    background:#fff;
+  }
+
+  .send-button{
+    min-width:30px;
+    width:30px;
+    min-height:31px;
+    height:31px;
+    border-radius:2px;
+    background:#e9efeb;
+    color:#107c41;
+  }
+
+  .send-button .icon{width:17px;height:17px}
+
+  .composer-note{
+    font-size:9px;
+    margin:4px 0 0;
+    line-height:1.4;
+  }
+
+  .composer-wrap .field-error{font-size:10px}
+  .composer-wrap .field-error:not(:empty){margin:3px 0}
+
+  /* 하단 시트 탭과 상태 표시줄 */
+  .bottom-nav{
+    height:31px;
+    min-height:31px;
+    display:flex;
+    align-items:stretch;
+    justify-content:flex-start;
+    padding:0 7px;
+    border-block:1px solid #c9c9c9;
+    gap:2px;
+    z-index:10;
+  }
+
+  .bottom-nav:before{
+    content:"‹　 ›";
+    width:42px;
+    color:#777;
+    line-height:29px;
+  }
+
+  .bottom-nav button{
+    flex-direction:row;
+    gap:4px;
+    padding:0 15px;
+    min-height:29px;
+    font-size:11px;
+    white-space:nowrap;
+  }
+
+  .bottom-nav .icon{display:none}
+  .bottom-nav .unread-dot{position:static;margin-left:2px}
+  .bottom-nav .request-badge{top:0;left:auto;right:0}
+
+  .bottom-nav:after{
+    content:"워크북　 │　 사이드바";
+    margin-left:auto;
+    line-height:29px;
+    color:#107c41;
+    font-size:10px;
+    font-weight:bold;
+    padding:0 4px;
+  }
+
+  .connection-line{
+    order:10;
+    min-height:22px;
+    height:22px;
+    padding:0 9px;
+    justify-content:flex-start;
+    border-top:1px solid #eee;
+    font-size:10px;
+    gap:7px;
+    color:#666;
+  }
+
+  .connection-line .text-button{
+    min-height:20px;
+    font-size:10px;
+    padding:0 4px;
+  }
+
+  .xl-status-note{
+    display:inline;
+    margin-left:auto;
+    font-size:10px;
+    color:#888;
+  }
+
+  .unread-setup{
+    min-height:25px;
+    font-size:11px;
+    padding:4px 10px;
+  }
+
+  #workspace.xl-members-open #page-members{
+    display:block!important;
+    position:absolute;
+    inset:0;
+    z-index:15;
+    padding:22px;
+    background:#f7f8f7;
+    overflow:auto;
+  }
+
+  #workspace.xl-members-open #page-home,
+  #workspace.xl-members-open #page-chat,
+  #workspace.xl-members-open #xl-sheet{
+    visibility:hidden;
+  }
+
+  .members-page>*{
+    max-width:720px;
+    margin-inline:auto;
+  }
+
+  .xl-mobile-open{display:none}
+  .xl-mobile-close{display:none!important}
+}
+
+@media(max-width:1099px){
+  #workspace{position:relative}
+  .xl-pivot-scroll{overflow:visible}
+
+  .xl-mobile-close{
+    display:block;
+    flex-shrink:0;
+    background:#107c41;
+    color:#fff;
+    border-radius:0;
+    text-align:right;
+    padding:8px 16px;
+  }
+
+  #xl-sheet.xl-open{
+    display:flex;
+    position:absolute;
+    inset:0;
+    z-index:20;
+    flex-direction:column;
+    background:#fff;
+    min-height:0;
+  }
+
+  .xl-table-scroll{
+    flex:1;
+    min-height:0;
+    overflow:auto;
+  }
+
+  .xl-table{
+    min-width:900px;
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+  }
+
+  .xl-table td,.xl-table th{
+    height:32px;
+    white-space:nowrap;
+    border:1px solid #ddd;
+    padding:4px 8px;
+    font-weight:400;
+  }
+
+  .xl-table th{background:#f6f6f6}
+
+  .xl-sheet-tools{
+    padding:8px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:5px;
+  }
+
+  .xl-sheet-tools input{font-size:16px}
+  .xl-sheet-tools small{color:#777}
+  .xl-ticker{font-size:11px;padding:8px}
+  .xl-more{max-height:45%;overflow:auto}
+}
+</style>
 </head>
 
 <body>
@@ -52,16 +1318,162 @@
 </svg>
 
 <div class="app-frame" id="app-frame">
+
   <header class="app-header">
-    <a class="brand" href="#" id="brand">
-      <span class="brand-mark" aria-hidden="true">r.</span>
+    <a class="brand" href="#" id="brand" aria-label="researchtalk 홈">
+      <span class="brand-mark" aria-hidden="true">X</span>
       <span>researchtalk</span>
     </a>
+
+    <div class="xl-quick" aria-hidden="true"
+         title="엑셀 화면 모형 · 표는 읽기 전용 예시">
+      자동 저장 <i class="xl-toggle"></i> 끔　 │　 ▣　 Σ　 ▦　 ▤　 ▾
+    </div>
+
+    <span class="xl-filename">
+      연구사업단_과제관리_월별현황.xlsx ▾
+    </span>
+
+    <div class="xl-title-search" aria-hidden="true">
+      <svg class="icon" viewBox="0 0 24 24">
+        <circle cx="10" cy="10" r="6"/>
+        <path d="m15 15 5 5"/>
+      </svg>
+      검색
+    </div>
+
+    <div class="xl-window" aria-hidden="true"><span>♧</span></div>
     <button class="avatar" id="my-profile" aria-label="내 계정과 참여자">나</button>
+    <div class="xl-window" aria-hidden="true">−　 ▢　 ×</div>
   </header>
+
+  <div class="xl-chrome"
+       title="엑셀 메뉴 모형입니다. 일정과 대화는 아래에서 사용하세요.">
+    <nav class="xl-menubar" aria-label="엑셀 메뉴 모형">
+      <button disabled>파일</button>
+      <button class="selected" disabled>홈</button>
+      <button disabled>삽입</button>
+      <button disabled>그리기</button>
+      <button disabled>페이지 레이아웃</button>
+      <button disabled>수식</button>
+      <button disabled>데이터</button>
+      <button disabled>검토</button>
+      <button disabled>보기</button>
+      <button disabled>개발 도구</button>
+      <button class="xl-comment" disabled>▱ 메모</button>
+      <button class="xl-share" disabled>♧ 공유 ▾</button>
+    </nav>
+
+    <div class="xl-ribbon-scroll">
+      <div class="xl-ribbon" aria-label="서식 메뉴 모형">
+
+        <div class="xl-group xl-undo">
+          <div class="xl-stack">
+            <button disabled>↶ ▾</button>
+            <button disabled>↷</button>
+          </div>
+          <small>실행 취소</small>
+        </div>
+
+        <div class="xl-group xl-clip">
+          <button class="big" disabled>
+            <b>📋</b>붙여넣기<br>⌄
+          </button>
+          <div class="xl-stack">
+            <button disabled>✂ 잘라내기</button>
+            <button disabled>▤ 복사 ▾</button>
+            <button disabled>◇ 서식 복사</button>
+          </div>
+          <small>클립보드</small>
+        </div>
+
+        <div class="xl-group xl-fonts">
+          <div class="xl-stack">
+            <div class="xl-row">
+              <span class="xl-box" style="width:130px">
+                맑은 고딕 <span>⌄</span>
+              </span>
+              <span class="xl-box">11 ⌄</span>
+              <span>가⌃　가⌄</span>
+            </div>
+            <div class="xl-row xl-font">
+              <span class="bold">가</span>　<i>가</i>　
+              <span class="under">가</span> ▾　
+              <span>▦</span> ▾　
+              <span class="fill">◈</span>　
+              <span class="color">가</span>
+              <span style="font-size:11px;color:#aaa">내천 ▾</span>
+            </div>
+          </div>
+          <small>글꼴</small>
+        </div>
+
+        <div class="xl-group xl-align">
+          <div class="xl-stack">
+            <div class="xl-row">
+              ☰　≡　☰　
+              <span style="color:#5c7fa5">↗</span>
+              ▾　│　↵ 자동 줄 바꿈
+            </div>
+            <div class="xl-row">
+              ☰　≡　☰　 ⇤　⇥　│　↔ 병합하고 가운데 맞춤 ▾
+            </div>
+          </div>
+          <small>맞춤</small>
+        </div>
+
+        <div class="xl-group xl-number">
+          <div class="xl-stack">
+            <span class="xl-box" style="width:130px">
+              일반 <span>⌄</span>
+            </span>
+            <div class="xl-row">▣ ▾　<b>%</b>　,　 .₀₀　.₀</div>
+          </div>
+          <small>표시 형식</small>
+        </div>
+
+        <div class="xl-group xl-styles">
+          <button class="big" disabled><b>▤</b>조건부 서식<br>⌄</button>
+          <button class="big" disabled><b>▦</b>표 서식<br>⌄</button>
+          <button class="big" disabled><b>▦</b>셀 스타일<br>⌄</button>
+          <small>스타일</small>
+        </div>
+
+        <div class="xl-group xl-cells">
+          <div class="xl-stack">
+            <button disabled>▣ 삽입 ▾</button>
+            <button disabled>▧ 삭제 ▾</button>
+            <button disabled>▦ 서식 ▾</button>
+          </div>
+          <small>셀</small>
+        </div>
+
+        <div class="xl-group xl-edit">
+          <div class="xl-stack">
+            <button disabled>Σ 자동 합계 ▾</button>
+            <button disabled>↓ 채우기 ▾</button>
+            <button disabled>◇ 지우기 ▾</button>
+          </div>
+          <button class="big" disabled><b>⚑</b>정렬 및 필터<br>⌄</button>
+          <button class="big" disabled><b>⌕</b>찾기 및 선택<br>⌄</button>
+          <small>편집</small>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="xl-formula" aria-label="선택한 셀 내용">
+    <div id="xl-cell">A2</div>
+    <span aria-hidden="true">×　 ✓</span>
+    <em aria-hidden="true">fx</em>
+    <output id="xl-value">연구데이터 통합 기반</output>
+    <span aria-hidden="true">⌄　</span>
+  </div>
 
   <div class="connection-line">
     <span id="connection-status" role="status">연결을 준비하고 있어요</span>
+    <span class="xl-status-note">researchtalk · 연구사업 관리　 │　 100%</span>
     <button id="retry-connection" class="text-button" hidden>다시 연결</button>
   </div>
 
@@ -70,76 +1482,152 @@
   </button>
 
   <main id="workspace" class="workspace" hidden>
-    <section id="page-home" class="page home-page" aria-label="오늘의 일정">
-      <div class="today-heading">
-        <div>
-          <p class="eyebrow" id="today-date"></p>
-          <h1 id="today-weekday"></h1>
-        </div>
-        <div class="date-stamp">
-          <span id="today-month"></span>
-          <strong id="today-number"></strong>
-        </div>
+
+    <!-- A–G: 연구사업 표 -->
+    <section id="xl-sheet" aria-label="연구사업 관리표 · 읽기 전용 예시">
+      <button id="xl-close-sheet" class="xl-mobile-close" type="button">
+        표 닫기 ×
+      </button>
+
+      <div class="xl-table-scroll">
+        <table class="xl-table" aria-label="연구사업단 과제별 예산 예시">
+          <colgroup>
+            <col style="width:34px">
+            <col style="width:calc(25% - 8.5px)">
+            <col style="width:calc(14% - 4.76px)">
+            <col style="width:calc(13% - 4.42px)">
+            <col style="width:calc(13% - 4.42px)">
+            <col style="width:calc(12% - 4.08px)">
+            <col style="width:calc(12% - 4.08px)">
+            <col style="width:calc(11% - 3.74px)">
+          </colgroup>
+          <thead>
+            <tr>
+              <th aria-label="행 번호"></th>
+              <th>A</th><th>B</th><th>C</th><th>D</th>
+              <th>E</th><th>F</th><th>G</th>
+            </tr>
+          </thead>
+          <tbody id="xl-body"></tbody>
+        </table>
       </div>
 
-      <section class="panel calendar-panel" aria-label="월별 달력">
-        <div class="section-heading">
-          <h2 id="calendar-month"></h2>
-          <div class="inline-actions">
-            <button id="calendar-today" class="text-button">오늘</button>
-            <button id="month-prev" class="icon-button" aria-label="이전 달">‹</button>
-            <button id="month-next" class="icon-button" aria-label="다음 달">›</button>
-          </div>
-        </div>
-        <div class="weekdays" aria-hidden="true">
-          <span>일</span><span>월</span><span>화</span><span>수</span>
-          <span>목</span><span>금</span><span>토</span>
-        </div>
-        <div id="calendar-grid" class="calendar-grid"></div>
-        <div class="calendar-key">
-          <span class="calendar-legend">
-            <i class="my-dot" aria-hidden="true"></i>내 일정·할 일
-          </span>
-          <span class="calendar-legend">
-            <i class="shared-dot" aria-hidden="true"></i>다른 참여자의 약속
-          </span>
-        </div>
-      </section>
+      <div class="xl-ticker">
+        <span id="xl-total"></span>
+      </div>
 
-      <section class="panel todo-panel" aria-labelledby="todo-heading">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">나의 하루</p>
-            <h2 id="todo-heading">오늘의 할 일</h2>
-          </div>
-          <span class="count-badge" id="todo-count">0 / 0</span>
-        </div>
-        <ul class="todo-list" id="todo-list"></ul>
-        <form id="todo-form" class="inline-form">
-          <label class="sr-only" for="todo-text">새 할 일</label>
-          <input id="todo-text" maxlength="300" required
-                 placeholder="할 일을 적어보세요" autocomplete="off">
-          <button class="square-button" aria-label="할 일 추가">+</button>
-        </form>
-      </section>
-
-      <section class="panel events-panel" aria-labelledby="events-heading">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">모두의 일정</p>
-            <h2 id="events-heading">이번 달의 약속</h2>
-          </div>
-          <button id="event-add" class="soft-button">+ 약속</button>
-        </div>
-        <div id="selected-events" class="selected-events" hidden></div>
-        <ul id="event-list" class="event-list"></ul>
-      </section>
+      <div class="xl-sheet-tools">
+        <input id="xl-search" type="search"
+               aria-label="예시 과제·부서 검색"
+               placeholder="과제·부서 검색">
+        <button class="active" type="button" disabled>과제·예산</button>
+        <button type="button" disabled>연구성과</button>
+        <button type="button" disabled>연구인력</button>
+        <small>읽기 전용 예시</small>
+      </div>
     </section>
 
+    <!-- H–I: 달력, 할 일, 일정 -->
+    <section id="page-home" class="page home-page" aria-label="오늘의 일정">
+      <div class="xl-letters" aria-hidden="true">
+        <span>H</span><span>I</span>
+      </div>
+
+      <div class="xl-pane-tools">
+        <strong>연구 일정</strong>
+        <span id="xl-current-date"></span>
+      </div>
+
+      <div class="xl-pivot-scroll">
+        <button id="xl-show-sheet" class="xl-mobile-open" type="button">
+          연구사업 표 보기
+        </button>
+
+        <div class="today-heading">
+          <div>
+            <p class="eyebrow" id="today-date"></p>
+            <h1 id="today-weekday"></h1>
+          </div>
+          <div class="date-stamp">
+            <span id="today-month"></span>
+            <strong id="today-number"></strong>
+          </div>
+        </div>
+
+        <section class="panel calendar-panel" aria-label="월별 달력">
+          <div class="section-heading">
+            <h2 id="calendar-month"></h2>
+            <div class="inline-actions">
+              <button id="calendar-today" class="text-button">오늘</button>
+              <button id="month-prev" class="icon-button" aria-label="이전 달">‹</button>
+              <button id="month-next" class="icon-button" aria-label="다음 달">›</button>
+            </div>
+          </div>
+
+          <div class="weekdays" aria-hidden="true">
+            <span>일</span><span>월</span><span>화</span><span>수</span>
+            <span>목</span><span>금</span><span>토</span>
+          </div>
+
+          <div id="calendar-grid" class="calendar-grid"></div>
+
+          <div class="calendar-key">
+            <span class="calendar-legend">
+              <i class="my-dot" aria-hidden="true"></i>내 일정
+            </span>
+            <span class="calendar-legend">
+              <i class="shared-dot" aria-hidden="true"></i>함께하는 약속
+            </span>
+          </div>
+        </section>
+
+        <section class="panel todo-panel" aria-labelledby="todo-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">나의 하루</p>
+              <h2 id="todo-heading">오늘의 할 일</h2>
+            </div>
+            <span class="count-badge" id="todo-count">0 / 0</span>
+          </div>
+
+          <ul class="todo-list" id="todo-list"></ul>
+
+          <form id="todo-form" class="inline-form">
+            <label class="sr-only" for="todo-text">새 할 일</label>
+            <input id="todo-text" maxlength="300" required
+                   placeholder="할 일을 적어보세요" autocomplete="off" />
+            <button class="square-button" aria-label="할 일 추가">+</button>
+          </form>
+        </section>
+
+        <section class="panel events-panel" aria-labelledby="events-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">모두의 일정</p>
+              <h2 id="events-heading">이번 달의 약속</h2>
+            </div>
+            <button id="event-add" class="soft-button">+ 약속</button>
+          </div>
+
+          <div id="selected-events" class="selected-events" hidden></div>
+          <ul id="event-list" class="event-list"></ul>
+        </section>
+      </div>
+
+      <div class="xl-pane-foot">
+        <button class="active" data-panel="calendar-panel" type="button">달력</button>
+        <button data-panel="todo-panel" type="button">할 일</button>
+        <button data-panel="events-panel" type="button">약속</button>
+      </div>
+    </section>
+
+    <!-- J: 메신저 -->
     <section id="page-chat" class="page chat-page" aria-label="대화" hidden>
+      <div class="xl-letters" aria-hidden="true"><span>J</span></div>
+
       <div class="chat-top">
         <div class="section-heading">
-          <h1>대화</h1>
+          <h1>연구사업단 대화</h1>
           <button id="private-start" class="soft-button">+ 개인 대화</button>
         </div>
         <div id="room-list" class="room-list" aria-label="대화방"></div>
@@ -153,14 +1641,24 @@
         <button id="history-open" class="text-button">날짜별 보기</button>
       </div>
 
-      <div class="chat-tools">
-        <label class="sr-only" for="chat-date">대화 날짜</label>
-        <input type="date" id="chat-date" min="1900-01-01" max="2200-12-31">
-        <button id="chat-today" class="text-button">오늘</button>
-        <button id="day-archive" class="text-button">하루 보관</button>
-        <button id="day-export" class="text-button">파일 저장</button>
-      </div>
-      <p id="archive-state" class="archive-state"></p>
+      <details class="xl-more">
+        <summary>날짜 · 보관 · 파일 · 요약</summary>
+        <div class="chat-tools">
+          <label class="sr-only" for="chat-date">대화 날짜</label>
+          <input type="date" id="chat-date" min="1900-01-01" max="2200-12-31" />
+          <button id="chat-today" class="text-button">오늘</button>
+          <button id="day-archive" class="text-button">하루 보관</button>
+          <button id="day-export" class="text-button">파일 저장</button>
+        </div>
+        <p id="archive-state" class="archive-state"></p>
+        <button id="summary-open" class="text-button summary-open">
+          하루 대화 요약
+        </button>
+      </details>
+
+      <button id="xl-first-unread" class="xl-unread" type="button" hidden>
+        ● 읽지 않은 대화부터 보기
+      </button>
 
       <div id="chat-scroll" class="chat-scroll" aria-label="대화 내용">
         <div id="chat-messages" class="chat-messages"></div>
@@ -175,7 +1673,6 @@
       </button>
 
       <div class="composer-wrap">
-        <button id="summary-open" class="text-button summary-open">하루 대화 요약</button>
         <form id="message-form" class="composer">
           <label class="sr-only" for="message-text">대화 입력</label>
           <textarea id="message-text" rows="1" maxlength="1000"
@@ -185,10 +1682,13 @@
           </button>
         </form>
         <p id="message-error" class="field-error" role="alert"></p>
-        <p id="composer-note" class="composer-note">보내는 대화는 자동으로 저장돼요</p>
+        <p id="composer-note" class="composer-note">
+          보내는 대화는 자동으로 저장돼요
+        </p>
       </div>
     </section>
 
+    <!-- 참여자 관리 -->
     <section id="page-members" class="page members-page" aria-label="참여자" hidden>
       <div class="section-heading page-heading">
         <div>
@@ -217,27 +1717,32 @@
 
   <nav id="bottom-nav" class="bottom-nav" aria-label="주요 메뉴" hidden>
     <button data-tab="home" aria-current="page">
-      <svg class="icon"><use href="#i-calendar"/></svg><span>오늘</span>
+      <svg class="icon"><use href="#i-calendar"/></svg>
+      <span>홈</span>
     </button>
     <button data-tab="chat">
-      <svg class="icon"><use href="#i-chat"/></svg><span>대화</span>
+      <svg class="icon"><use href="#i-chat"/></svg>
+      <span>대화</span>
       <span class="unread-dot" aria-hidden="true" hidden></span>
     </button>
     <button data-tab="members">
-      <svg class="icon"><use href="#i-users"/></svg><span>참여자</span>
+      <svg class="icon"><use href="#i-users"/></svg>
+      <span>참여자</span>
       <span id="request-badge" class="request-badge" hidden></span>
     </button>
   </nav>
 </div>
 
+<!-- 기존 로그인 -->
 <section id="auth-screen" class="auth-screen" aria-label="로그인">
   <div class="auth-brand">
-    <span class="brand-mark">r.</span><strong>researchtalk</strong>
+    <span class="brand-mark">r.</span>
+    <strong>researchtalk</strong>
   </div>
 
   <div class="auth-card">
     <p class="eyebrow">함께 생각하고 기록하는 연구 공간</p>
-    <h1 id="auth-title">반가워요.<br>오늘도 함께해요.</h1>
+    <h1 id="auth-title">반가워요.<br />오늘도 함께해요.</h1>
     <p class="muted" id="auth-description">내 계정으로 로그인해 주세요.</p>
 
     <div class="segmented" id="auth-modes">
@@ -249,17 +1754,17 @@
       <div id="email-fields">
         <label for="auth-email">이메일</label>
         <input id="auth-email" type="email" autocomplete="email"
-               required placeholder="이메일 주소">
+               required placeholder="이메일 주소" />
         <label for="auth-password">비밀번호</label>
         <input id="auth-password" type="password" autocomplete="current-password"
-               required placeholder="앱 비밀번호">
+               required placeholder="앱 비밀번호" />
       </div>
 
       <div id="join-fields" hidden>
         <label for="auth-name">대화방에서 쓸 이름</label>
-        <input id="auth-name" maxlength="20" autocomplete="nickname" placeholder="이름">
+        <input id="auth-name" maxlength="20" autocomplete="nickname" placeholder="이름" />
         <label for="auth-invite">초대 코드</label>
-        <input id="auth-invite" autocomplete="off" placeholder="초대 링크의 코드">
+        <input id="auth-invite" autocomplete="off" placeholder="초대 링크의 코드" />
       </div>
 
       <p class="field-error" id="auth-error" role="alert"></p>
@@ -268,13 +1773,16 @@
     </form>
 
     <button id="auth-retry" class="primary-button" hidden>다시 연결</button>
-    <button id="auth-switch-account" class="text-button" hidden>다른 계정으로 로그인</button>
+    <button id="auth-switch-account" class="text-button" hidden>
+      다른 계정으로 로그인
+    </button>
     <p class="auth-note">처음 초대받았다면 ‘초대받아 가입’을 눌러주세요.</p>
   </div>
 </section>
 
 <div id="modal" class="modal-backdrop" hidden>
-  <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <section class="modal-card" role="dialog"
+           aria-modal="true" aria-labelledby="modal-title">
     <div class="section-heading">
       <h2 id="modal-title"></h2>
       <button id="modal-close" class="icon-button" aria-label="닫기">×</button>
@@ -282,476 +1790,410 @@
     <div id="modal-body"></div>
   </section>
 </div>
+
 <div id="toast" class="toast" role="status" hidden></div>
 <noscript>researchtalk를 사용하려면 브라우저의 자바스크립트를 켜주세요.</noscript>
 
-<style id="rt-excel-style">
-:root{--bg:#f4f5f4;--paper:#fff;--ink:#24332b;--muted:#606d64;--line:#d4d9d5;--primary:#107c41;--soft:#e6f1e9}
-body,.app-frame,.auth-screen,.chat-scroll{background-image:none!important}
-.app-frame{background:#f5f6f5}.app-header{background:#107c41;border:0;color:white}
-.brand{color:white}.brand-mark{background:#fff;color:#107c41;border-radius:3px}
-.app-header .avatar{background:#e3f1e7;color:#07582c}.connection-line{background:#edf1ed}
-.panel,.today-heading,.date-stamp,.room-chip,.message-bubble,.mine .message-bubble{border-radius:4px;box-shadow:none}
-.bottom-nav{background:#fafafa}.bottom-nav button{border-radius:0}.bottom-nav button[aria-current=page]{border-bottom:3px solid #107c41;background:#e6f1e9}
-.chat-scroll{background:#f6f8f6}.mine .message-bubble{background:#e3f0e5}.message-bubble{background:white}
-#rt-sheet{display:none;min-width:0;min-height:0;background:white;color:#26362d}
-.rt-title,.rt-ribbon,.rt-formula,.rt-sheets,.rt-status{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid #d4d9d5;flex-shrink:0}
-.rt-title{background:#f5f7f5;justify-content:space-between;font-size:14px}.rt-title strong{font-size:16px}.rt-sample{font-size:12px;color:#675313;background:#fff4d8;padding:4px 7px}
-.rt-ribbon{flex-wrap:wrap}.rt-ribbon button,.rt-sheets button{padding:8px 12px;border:1px solid #ccd7ce;background:#fff;border-radius:3px;white-space:nowrap;font-size:14px}
-.rt-ribbon input{flex:1;min-width:140px;width:180px;min-height:44px;border-radius:3px;background:white}
-.rt-formula{padding:5px 10px;font-size:14px;background:#fff}.rt-cell-name{border-right:1px solid #ccc;width:58px;flex-shrink:0}.rt-fx{font-family:Georgia,serif;font-style:italic;color:#107c41}.rt-formula-value{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rt-table-scroll{flex:1;min-height:0;overflow:auto;background:repeating-linear-gradient(#fff 0 43px,#edf0ed 43px 44px)}
-.rt-table{border-collapse:separate;border-spacing:0;width:100%;min-width:810px;font-size:14px;table-layout:fixed}
-.rt-table th,.rt-table td{border-right:1px solid #d9ded9;border-bottom:1px solid #d9ded9;height:44px;padding:0;background:white}
-.rt-table thead th{position:sticky;top:0;z-index:2;background:#edf0ed;height:28px;color:#5c695f;font-weight:500;font-size:12px}
-.rt-table thead tr:nth-child(2) th{top:28px;height:44px;background:#e8f1e9;color:#254e34;font-size:13px;font-weight:700;padding:7px}
-.rt-table th:first-child{width:40px;text-align:center;background:#edf0ed}.rt-table th:nth-child(2){width:205px}.rt-table th:nth-child(3){width:116px}
-.rt-table tbody th{font-size:12px;color:#738075;font-weight:400}.rt-table input{border:0;border-radius:0;background:transparent;padding:8px;font-size:16px;min-height:44px;height:44px;width:100%;box-shadow:none}
-.rt-table input[type=number]{text-align:right;font-variant-numeric:tabular-nums;-moz-appearance:textfield}.rt-table input::-webkit-inner-spin-button{appearance:none}
-.rt-table td:focus-within{outline:2px solid #107c41;outline-offset:-2px}.rt-table output{display:block;text-align:right;padding:8px;color:#126735;font-variant-numeric:tabular-nums}
-.rt-table tbody tr:nth-child(even) td{background:#f8faf8}.rt-table tfoot td{position:sticky;bottom:0;background:#edf5ee;padding:10px 8px;text-align:right;font-weight:700}
-.rt-sheets{background:#f5f6f5}.rt-sheets button[aria-pressed=true]{color:#107c41;font-weight:700;border-bottom:3px solid #107c41}.rt-status{font-size:12px;color:#56665b;background:#edf1ed;border:0;justify-content:space-between;flex-wrap:wrap}
-.rt-notice{font-size:12px;color:#6c6245;padding:7px 12px;background:#fffaf0;border-bottom:1px solid #e7dfcc}
-.rt-mobile-sheet{display:none}.rt-first-unread{font-size:13px;border:1px solid #d4d9d5;border-radius:4px;padding:8px 10px;background:white;color:#b82b40}
-.rt-chat-more{flex-shrink:0;background:#fff;border-bottom:1px solid var(--line)}.rt-chat-more summary{padding:10px 14px;min-height:44px;cursor:pointer;font-size:13px;color:#526758}
-
-@media(min-width:1100px){
- .app-frame{max-width:none;border:0;height:100vh;height:var(--app-height,100dvh);box-shadow:none}
- .app-header{padding:calc(5px + env(safe-area-inset-top)) 18px 5px;min-height:54px}.brand{font-size:18px}.brand-mark{width:30px;height:30px;font-size:24px}
- .connection-line{justify-content:flex-start;padding-left:18px;min-height:23px}
- #workspace:not([hidden]){display:grid;grid-template-columns:minmax(500px,1fr) minmax(540px,42%);grid-template-rows:minmax(0,44%) minmax(0,1fr);gap:1px;background:#bdc9bf;position:relative;overflow:hidden}
- #rt-sheet{display:flex;flex-direction:column;grid-column:1;grid-row:1/3}
- #workspace #page-home{display:grid!important;grid-template-columns:332px minmax(168px,1fr);align-content:start;gap:8px;grid-column:2;grid-row:1;overflow:auto;padding:10px;background:#f4f6f3;min-width:0;min-height:0}
- #page-home .today-heading{padding:8px 12px;min-height:62px;background:white;border-radius:3px}.today-heading h1{font-size:22px}.date-stamp{width:48px}.date-stamp strong{font-size:21px}.date-stamp span{font-size:11px}
- #page-home .today-heading{grid-column:1/-1}#page-home .calendar-panel{grid-column:1;grid-row:2/4}#page-home .todo-panel{grid-column:2;grid-row:2}#page-home .events-panel{grid-column:2;grid-row:3}#page-home .panel{margin-top:0;padding:12px}.calendar-day{height:44px}.calendar-panel .weekdays{padding-top:5px}.calendar-key{padding-top:5px}
- #workspace #page-chat{display:flex!important;grid-column:2;grid-row:2;min-width:0;min-height:0;background:white;border-top:3px solid #107c41}
- .chat-top{padding:5px 12px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.chat-top .section-heading{display:contents}.chat-top h1{display:none}.chat-top .room-list{order:-1;flex:1;min-width:100%;margin:0 -12px}.chat-top:has(.rt-first-unread[hidden]) .room-list{min-width:0}.chat-top h1{font-size:17px}.room-list{margin:0 -12px;padding:0 12px 4px;gap:5px}.room-chip{padding:6px 10px}.chat-context{padding:4px 12px}.chat-context strong{font-size:14px}
- .chat-scroll{padding:10px 12px}.message-main{max-width:84%}.message-bubble{padding:8px 10px}.message-author{margin-bottom:3px}.message-meta{margin-top:0}.message-delete{min-height:44px}
- .composer-wrap{padding:8px 10px}.composer-note{margin:4px 0 0}.rt-chat-more .summary-open{padding:7px 14px}
- .bottom-nav{display:flex;justify-content:flex-start;padding:0 12px calc(2px + env(safe-area-inset-bottom));min-height:44px}.bottom-nav button{flex-direction:row;gap:7px;padding:7px 18px;font-size:13px;min-width:110px}.bottom-nav .unread-dot{top:6px;left:auto;right:9px}
- #workspace.rt-members-open #page-members{display:block!important;position:absolute;inset:0;z-index:15;background:#f4f6f3;padding:24px;overflow:auto}
- #workspace.rt-members-open #page-home,#workspace.rt-members-open #page-chat,#workspace.rt-members-open #rt-sheet{visibility:hidden}
- .members-page>*{max-width:760px;margin-left:auto;margin-right:auto}
-}
-@media(min-width:1100px) and (max-height:720px){
- #workspace:not([hidden]){grid-template-rows:minmax(0,32%) minmax(0,1fr)}
-}
-@media(min-width:1600px){
- #workspace #page-home{display:grid!important;grid-template-columns:350px minmax(0,1fr);align-content:start;gap:8px}
- #page-home .today-heading{grid-column:1/-1}#page-home .calendar-panel{grid-column:1;grid-row:2/4;margin:0}#page-home .todo-panel{grid-column:2;grid-row:2;margin:0}#page-home .events-panel{grid-column:2;grid-row:3;margin:0}
-}
-@media(max-width:1099px){
- .rt-mobile-sheet{display:block;width:100%;margin:8px 0;background:#e6f1e9;color:#107c41;border:1px solid #b8cebd;border-radius:4px;padding:10px}
- #rt-sheet.rt-mobile-open{display:flex;flex-direction:column;position:absolute;inset:0;z-index:20}
- #workspace{position:relative}.rt-title{flex-wrap:wrap}.rt-ribbon{gap:5px}.rt-ribbon button{font-size:13px;padding:7px}.rt-sheets{overflow-x:auto}
-}
-</style>
-
-<script id="rt-excel-ui">
+<script id="xl-compact-script">
 (function(){
- function start(){
-  if(document.getElementById('rt-sheet')||!window.RTStore)return;
+  'use strict';
 
-  const S=window.RTStore;
-  const $=id=>document.getElementById(id);
-  const wide=matchMedia('(min-width:1100px)');
-  const workspace=$('workspace'),chat=$('page-chat');
+  function start(){
+    const S=window.RTStore;
+    const $=id=>document.getElementById(id);
+    if(!S)return;
 
-  const sheets=[
-   {
-    name:'과제·예산',
-    columns:['세부과제','책임부서','예산(백만원)','집행(백만원)','집행률','진행 상태'],
-    numbers:[2,3],ratio:true,
-    rows:[
-     ['연구데이터 통합 기반','데이터연구팀',180,126,0,'수행 중'],
-     ['산학 공동연구','산학협력팀',240,168,0,'수행 중'],
-     ['실증 및 성과 검증','실증지원팀',150,63,0,'자료 수집'],
-     ['국제 공동연구','국제협력팀',120,54,0,'협약 진행'],
-     ['신진연구자 지원','인재양성팀',90,63,0,'수행 중'],
-     ['성과 확산 및 기술이전','성과관리팀',80,32,0,'검토 중'],
-     ['공용장비 운영','연구지원팀',110,77,0,'수행 중'],
-     ['연구윤리 및 데이터 관리','운영사무국',30,12,0,'점검 중'],
-     ['정책 연구 및 수요 조사','정책연구팀',100,45,0,'분석 중'],
-     ['연구사업 운영','운영사무국',60,36,0,'수행 중']
-    ]
-   },
-   {
-    name:'연구성과',
-    columns:['성과 항목','담당부서','연간 목표','누적 실적','달성률','검토 상태'],
-    numbers:[2,3],ratio:true,
-    rows:[
-     ['국제학술지 논문(편)','학술연구팀',24,16,0,'게재 확인'],
-     ['국내학술지 논문(편)','학술연구팀',12,9,0,'게재 확인'],
-     ['특허 출원(건)','성과관리팀',8,5,0,'출원 완료'],
-     ['기술이전 계약(건)','산학협력팀',4,2,0,'계약 확인'],
-     ['공개 데이터셋(건)','데이터연구팀',6,4,0,'검증 중'],
-     ['산학 세미나(회)','운영사무국',12,8,0,'결과 정리'],
-     ['정책보고서(건)','정책연구팀',5,3,0,'검토 중']
-    ]
-   },
-   {
-    name:'연구인력',
-    columns:['소속팀','주요 업무','책임연구원(명)','참여연구원(명)','연구보조원(명)','운영 상태'],
-    numbers:[2,3,4],ratio:false,
-    rows:[
-     ['데이터연구팀','데이터 구축·분석',2,5,3,'운영 중'],
-     ['학술연구팀','논문·연구설계',3,6,4,'운영 중'],
-     ['실증지원팀','실증·현장조사',2,4,2,'운영 중'],
-     ['산학협력팀','기업협력·기술이전',1,3,1,'운영 중'],
-     ['정책연구팀','정책·수요 분석',2,4,2,'운영 중'],
-     ['운영사무국','예산·행정·성과',1,3,0,'운영 중']
-    ]
-   }
-  ];
+    const wide=matchMedia('(min-width:1100px)');
+    const workspace=$('workspace');
+    const chat=$('page-chat');
+    const sheet=$('xl-sheet');
+    const scroller=$('chat-scroll');
 
-  const original=JSON.stringify(sheets);
-  let sheet=0,query='',lastSelf=S.load()?.self||null;
-  let reading=false,attention=false,readTimer;
+    /* 왼쪽 표에 표시할 화면용 연구사업 예시 */
+    const examples=[
+      ['연구데이터 통합 기반','데이터연구팀',180,126,'논문 4편','수행 중'],
+      ['산학 공동연구 플랫폼','산학협력팀',240,168,'협약 8건','수행 중'],
+      ['실증 및 성과 검증','실증지원팀',150,63,'실증 3건','자료 수집'],
+      ['국제 공동연구 네트워크','국제협력팀',120,54,'교류 5회','협약 진행'],
+      ['신진연구자 연구 지원','인재양성팀',90,63,'지원 12명','수행 중'],
+      ['성과 확산 및 기술이전','성과관리팀',80,32,'이전 2건','검토 중'],
+      ['공용 연구장비 운영','연구지원팀',110,77,'활용 56회','수행 중'],
+      ['연구윤리 및 데이터 관리','운영사무국',30,12,'점검 4회','점검 중'],
+      ['정책 연구 및 수요 조사','정책연구팀',100,45,'보고 3건','분석 중'],
+      ['연구사업 운영 및 관리','운영사무국',60,36,'회의 9회','수행 중'],
+      ['지역혁신 기업 공동실증','산학협력팀',210,147,'기업 7개','수행 중'],
+      ['학술논문 게재 지원','학술연구팀',75,48,'논문 16편','게재 확인'],
+      ['연구데이터 품질 검증','데이터연구팀',95,57,'검증 8건','검증 중'],
+      ['핵심기술 특허 출원','성과관리팀',65,39,'출원 5건','출원 완료'],
+      ['대학원생 연구역량 강화','인재양성팀',85,51,'참여 24명','수행 중'],
+      ['산학협력 수요 발굴','산학협력팀',55,22,'면담 18회','조사 중'],
+      ['중간성과 자체평가','평가분석팀',40,28,'평가 6건','검토 중'],
+      ['공개 데이터셋 구축','데이터연구팀',130,78,'공개 4건','구축 중'],
+      ['국제학술대회 참여 지원','국제협력팀',70,42,'발표 9건','수행 중'],
+      ['연구성과 홍보 및 보급','성과관리팀',45,18,'배포 6건','제작 중'],
+      ['연구시설 유지 및 안전','연구지원팀',80,56,'점검 12회','점검 완료'],
+      ['지역사회 연계 연구','정책연구팀',105,63,'과제 5건','수행 중'],
+      ['공동연구 워크숍 운영','운영사무국',35,21,'개최 3회','진행 중'],
+      ['차년도 연구기획','기획전략팀',50,15,'기획 4건','기획 중']
+    ];
 
-  const panel=document.createElement('section');
-  panel.id='rt-sheet';
-  panel.setAttribute('aria-label','연구사업 관리표 예시');
-  panel.innerHTML=`
-   <div class="rt-title">
-    <strong>연구사업단 업무현황</strong>
-    <span class="rt-sample">예시 자료 · 단위는 열 제목 참고</span>
-    <button id="rt-close" type="button" aria-label="표 닫기">닫기</button>
-   </div>
-   <div class="rt-ribbon">
-    <input id="rt-search" type="search" aria-label="표 검색" placeholder="과제·부서 검색">
-    <button id="rt-add" type="button">행 추가</button>
-    <button id="rt-csv" type="button">CSV 내려받기</button>
-    <button id="rt-reset" type="button">예시 복원</button>
-   </div>
-   <div class="rt-formula">
-    <span id="rt-cell" class="rt-cell-name">A1</span>
-    <span class="rt-fx">fx</span>
-    <span id="rt-value" class="rt-formula-value">셀을 선택하면 내용이 표시됩니다.</span>
-   </div>
-   <p class="rt-notice">이 표는 화면용 예시입니다. 편집 내용은 공유·자동 저장되지 않으며, 새로고침 전에 CSV로 내려받으세요.</p>
-   <div class="rt-table-scroll">
-    <table class="rt-table" aria-label="연구사업 관리표">
-     <thead id="rt-head"></thead>
-     <tbody id="rt-body"></tbody>
-     <tfoot id="rt-foot"></tfoot>
-    </table>
-   </div>
-   <div id="rt-tabs" class="rt-sheets" aria-label="관리표 선택"></div>
-   <div class="rt-status">
-    <span id="rt-total"></span>
-    <span>researchtalk · 연구사업 관리</span>
-   </div>`;
-  workspace.prepend(panel);
+    const fmt=n=>n.toLocaleString('ko-KR');
 
-  const mobile=document.createElement('button');
-  mobile.type='button';
-  mobile.className='rt-mobile-sheet';
-  mobile.textContent='연구사업 관리표 열기';
-  $('page-home').prepend(mobile);
-  mobile.onclick=()=>{
-   panel.classList.add('rt-mobile-open');
-   $('rt-search').focus();
-  };
-  $('rt-close').onclick=()=>{
-   panel.classList.remove('rt-mobile-open');
-   mobile.focus();
-  };
-  document.querySelectorAll('[data-tab]').forEach(b=>
-   b.addEventListener('click',()=>panel.classList.remove('rt-mobile-open'))
-  );
+    const make=(tag,text)=>{
+      const n=document.createElement(tag);
+      n.textContent=text;
+      return n;
+    };
 
-  const more=document.createElement('details');
-  more.className='rt-chat-more';
-  const summary=document.createElement('summary');
-  summary.textContent='날짜·보관·파일·요약';
-  more.append(summary);
-  $('chat-scroll').before(more);
-  for(const id of ['chat-tools','archive-state','summary-open']){
-   const el=id==='chat-tools'?document.querySelector('.chat-tools'):$(id);
-   if(el)more.append(el);
-  }
+    let query='';
+    let attention=false;
+    let reading=false;
+    let timer;
+    let followBottom=true;
+    let lastContext='';
+    let lastMessage='';
+    let lastSelf=S.load()?.self||null;
 
-  const unread=document.createElement('button');
-  unread.type='button';
-  unread.className='rt-first-unread';
-  unread.textContent='안 읽은 대화부터';
-  unread.hidden=true;
-  document.querySelector('.chat-top .section-heading').append(unread);
-  unread.onclick=()=>{
-   const state=S.load();
-   const target=state?.unread?.find(u=>u.roomId===state.roomId)||state?.unread?.[0];
-   if(target)document.querySelector('[data-room="'+target.roomId+'"]')?.click();
-  };
+    function draw(){
+      const body=$('xl-body');
+      body.replaceChildren();
 
-  const make=(tag,text)=>{
-   const el=document.createElement(tag);
-   if(text!==undefined)el.textContent=text;
-   return el;
-  };
-  const fmt=n=>Number(n).toLocaleString('ko-KR',{maximumFractionDigits:1});
-  const rate=r=>r[2]>0?Math.round(r[3]/r[2]*1000)/10:null;
-  const shown=()=>sheets[sheet].rows
-   .map((r,i)=>({r,i}))
-   .filter(({r})=>r.join(' ').toLowerCase().includes(query));
+      const headers=[
+        '세부 연구과제','책임부서','예산(백만원)',
+        '집행(백만원)','집행률','연구성과','진행 상태'
+      ];
 
-  function totals(){
-   const s=sheets[sheet],visible=shown(),tr=make('tr');
-   const label=make('td','표시 합계');
-   label.colSpan=3;
-   tr.append(label);
+      const rows=examples
+        .map((r,i)=>({r,i}))
+        .filter(({r})=>r.join(' ').includes(query));
 
-   for(let col=2;col<6;col++){
-    const sum=visible.reduce((n,{r})=>n+(Number(r[col])||0),0);
-    let text=s.numbers.includes(col)?fmt(sum):'';
-    if(sheet===1&&s.numbers.includes(col))text='—';
-    if(col===4&&s.ratio){
-     const a=visible.reduce((n,{r})=>n+r[2],0);
-     const b=visible.reduce((n,{r})=>n+r[3],0);
-     text=a?fmt(b/a*100)+'%':'—';
-     if(sheet===1)text='항목별 확인';
-    }
-    tr.append(make('td',text));
-   }
-   $('rt-foot').replaceChildren(tr);
-   $('rt-total').textContent=visible.length+' / '+s.rows.length+'개 항목 · 셀을 눌러 편집';
-  }
+      function row(values,number,header=false){
+        const tr=make('tr','');
+        tr.append(make('th',number));
 
-  function draw(){
-   const s=sheets[sheet],letters=make('tr'),labels=make('tr');
-   letters.append(make('th',''));
-   labels.append(make('th','1'));
-   s.columns.forEach((c,i)=>{
-    letters.append(make('th',String.fromCharCode(65+i)));
-    labels.append(make('th',c));
-   });
-   $('rt-head').replaceChildren(letters,labels);
-   $('rt-body').replaceChildren();
+        values.forEach((text,j)=>{
+          const td=make('td',text);
+          td.title=text;
+          td.dataset.cell=String.fromCharCode(65+j)+number;
+          td.tabIndex=-1;
 
-   for(const {r,i} of shown()){
-    const tr=make('tr');
-    tr.append(make('th',String(i+2)));
+          if(header){
+            td.className='xl-header';
+          }else if(j===4){
+            td.className=parseFloat(text)>=65?'up':'down';
+          }
 
-    r.forEach((v,j)=>{
-     const td=make('td');
-     if(j===4&&s.ratio){
-      const value=rate(r);
-      td.append(make('output',value===null?'—':fmt(value)+'%'));
-     }else{
-      const input=make('input');
-      input.value=v;
-      input.type=s.numbers.includes(j)?'number':'text';
-      input.setAttribute('aria-label',s.columns[j]+' · '+(i+2)+'행');
+          tr.append(td);
+        });
 
-      if(input.type==='number'){
-       input.min='0';
-       input.step='any';
-      }else{
-       input.maxLength=200;
+        body.append(tr);
       }
 
-      input.onfocus=()=>{
-       $('rt-cell').textContent=String.fromCharCode(65+j)+(i+2);
-       $('rt-value').textContent=input.value;
-      };
-      input.oninput=()=>{
-       r[j]=input.type==='number'?Math.max(0,Number(input.value)||0):input.value;
-       $('rt-value').textContent=input.value;
-       if(s.ratio){
-        const value=rate(r);
-        tr.querySelector('output').textContent=value===null?'—':fmt(value)+'%';
-       }
-       totals();
-      };
-      input.onblur=()=>{
-       if(input.type==='number')input.value=r[j];
-      };
-      input.onkeydown=e=>{
-       if(e.key==='Enter'&&!e.isComposing&&e.keyCode!==229){
-        e.preventDefault();
-        const inputs=[...$('rt-body').querySelectorAll('input')];
-        const next=inputs[inputs.indexOf(input)+(e.shiftKey?-1:1)];
-        next?.focus();
-       }
-      };
-      td.append(input);
-     }
-     tr.append(td);
+      row(headers,1,true);
+
+      rows.forEach(({r,i})=>{
+        row([
+          r[0],
+          r[1],
+          fmt(r[2]),
+          fmt(r[3]),
+          (r[3]/r[2]*100).toFixed(1)+'%',
+          r[4],
+          r[5]
+        ],i+2);
+      });
+
+      for(let n=0;n<Math.max(0,32-rows.length);n++){
+        row(['','','','','','',''],examples.length+2+n);
+      }
+
+      const cells=body.querySelectorAll('td');
+      if(cells.length>7)cells[7].tabIndex=0;
+
+      const budget=rows.reduce((n,{r})=>n+r[2],0);
+      const spent=rows.reduce((n,{r})=>n+r[3],0);
+
+      $('xl-total').textContent=
+        '총예산 '+fmt(budget)+
+        '　 │　 집행 '+fmt(spent)+
+        '　 │　 집행률 '+
+        (budget?(spent/budget*100).toFixed(1):'0')+'%';
+    }
+
+    function select(cell){
+      if(!cell)return;
+
+      sheet.querySelectorAll('td[tabindex="0"]').forEach(c=>{
+        c.tabIndex=-1;
+      });
+
+      cell.tabIndex=0;
+      $('xl-cell').textContent=cell.dataset.cell;
+      $('xl-value').textContent=cell.textContent;
+    }
+
+    $('xl-body').addEventListener('click',e=>{
+      select(e.target.closest('td'));
     });
-    $('rt-body').append(tr);
-   }
 
-   $('rt-tabs').replaceChildren();
-   sheets.forEach((s,i)=>{
-    const b=make('button',s.name);
-    b.type='button';
-    b.setAttribute('aria-pressed',String(sheet===i));
-    b.onclick=()=>{
-     sheet=i;
-     query='';
-     $('rt-search').value='';
-     draw();
+    $('xl-body').addEventListener('focusin',e=>{
+      if(e.target.matches('td'))select(e.target);
+    });
+
+    $('xl-body').addEventListener('keydown',e=>{
+      const delta={
+        ArrowLeft:-1,
+        ArrowRight:1,
+        ArrowUp:-7,
+        ArrowDown:7
+      }[e.key];
+
+      if(!delta||!e.target.matches('td'))return;
+
+      e.preventDefault();
+      const cells=[...$('xl-body').querySelectorAll('td')];
+      const next=cells[cells.indexOf(e.target)+delta];
+
+      if(next){
+        select(next);
+        next.focus();
+      }
+    });
+
+    $('xl-search').addEventListener('input',e=>{
+      query=e.target.value.trim();
+      draw();
+    });
+
+    $('xl-show-sheet').onclick=()=>{
+      sheet.classList.add('xl-open');
+      $('xl-close-sheet').focus();
     };
-    $('rt-tabs').append(b);
-   });
-   totals();
-  }
 
-  $('rt-search').oninput=e=>{
-   query=e.target.value.trim().toLowerCase();
-   draw();
-  };
-  $('rt-add').onclick=()=>{
-   query='';
-   $('rt-search').value='';
-   const s=sheets[sheet];
-   s.rows.push(s.columns.map((c,j)=>
-    s.numbers.includes(j)||j===4&&s.ratio?0:j===0?'새 항목':''
-   ));
-   draw();
-   $('rt-body').lastElementChild?.querySelector('input')?.focus();
-  };
-  $('rt-reset').onclick=()=>{
-   if(confirm('편집한 예시 표를 처음 상태로 되돌릴까요?')){
-    sheets.splice(0,sheets.length,...JSON.parse(original));
-    query='';
-    $('rt-search').value='';
+    $('xl-close-sheet').onclick=()=>{
+      sheet.classList.remove('xl-open');
+      $('xl-show-sheet').focus();
+    };
+
+    document.querySelectorAll('[data-tab]').forEach(b=>{
+      b.addEventListener('click',()=>{
+        sheet.classList.remove('xl-open');
+      });
+    });
+
+    document.querySelectorAll('[data-panel]').forEach(b=>{
+      b.onclick=()=>{
+        const area=document.querySelector('.xl-pivot-scroll');
+        const target=document.querySelector('.'+b.dataset.panel);
+
+        area.scrollTop+=
+          target.getBoundingClientRect().top-
+          area.getBoundingClientRect().top-6;
+      };
+    });
+
+    /* 기존 대화방 열기 동작을 사용해 첫 미독 메시지로 이동 */
+    const unread=$('xl-first-unread');
+
+    unread.onclick=()=>{
+      const state=S.load();
+      const target=
+        state?.unread?.find(u=>u.roomId===state.roomId)||
+        state?.unread?.[0];
+
+      if(target){
+        [...document.querySelectorAll('[data-room]')]
+          .find(b=>b.dataset.room===target.roomId)?.click();
+      }
+    };
+
+    function layout(){
+      const members=!$('page-members').hidden;
+      workspace.classList.toggle('xl-members-open',members);
+      if(members)sheet.classList.remove('xl-open');
+    }
+
+    new MutationObserver(layout).observe($('page-members'),{
+      attributes:true,
+      attributeFilter:['hidden']
+    });
+
+    const nativeChat=()=>!!document.querySelector(
+      '[data-tab="chat"][aria-current]'
+    );
+
+    function stopReading(){
+      attention=false;
+
+      if(wide.matches&&nativeChat()){
+        document.querySelector('[data-tab="home"]').click();
+      }
+    }
+
+    for(const el of [
+      sheet,
+      $('page-home'),
+      document.querySelector('.xl-chrome'),
+      document.querySelector('.xl-formula')
+    ]){
+      for(const type of ['pointerdown','focusin']){
+        el.addEventListener(type,stopReading);
+      }
+    }
+
+    const schedule=()=>{
+      clearTimeout(timer);
+      timer=setTimeout(read,500);
+    };
+
+    for(const type of ['pointerdown','focusin']){
+      chat.addEventListener(type,()=>{
+        attention=true;
+        schedule();
+      });
+    }
+
+    scroller.addEventListener('scroll',()=>{
+      followBottom=
+        scroller.scrollHeight-
+        scroller.scrollTop-
+        scroller.clientHeight<60;
+
+      schedule();
+    },{passive:true});
+
+    document.addEventListener('visibilitychange',schedule);
+    window.addEventListener('focus',schedule);
+
+    /*
+      데스크톱에서는 대화창이 항상 보이므로,
+      사용자가 대화 영역을 선택했을 때 실제 보이는 메시지만 읽음 처리.
+    */
+    async function read(){
+      if(
+        !wide.matches||
+        !attention||
+        reading||
+        document.visibilityState==='hidden'||
+        !document.hasFocus()||
+        !$('modal').hidden||
+        !$('page-members').hidden||
+        workspace.hidden||
+        nativeChat()
+      )return;
+
+      const state=S.load();
+
+      if(
+        !state||
+        state.loading||
+        S.info().status!=='connected'
+      )return;
+
+      const rect=scroller.getBoundingClientRect();
+      const area=workspace.getBoundingClientRect();
+      const top=Math.max(rect.top,area.top,0);
+      const bottom=Math.min(
+        rect.bottom,
+        area.bottom,
+        window.innerHeight
+      );
+
+      if(rect.height<=0||bottom<=top)return;
+
+      const ids=[
+        ...$('chat-messages').querySelectorAll('[data-message]')
+      ].filter(el=>{
+        const r=el.getBoundingClientRect();
+
+        return (
+          r.bottom>top&&
+          r.top<bottom&&
+          state.messages.some(m=>
+            m.id===el.dataset.message&&m.unread
+          )
+        );
+      }).map(el=>el.dataset.message);
+
+      if(!ids.length)return;
+
+      reading=true;
+
+      try{
+        await S.markRead(ids);
+      }catch(e){
+        $('message-error').textContent=e.message;
+      }finally{
+        reading=false;
+      }
+    }
+
+    function sync(state){
+      $('xl-current-date').textContent=
+        $('today-month').textContent+' '+
+        $('today-number').textContent+'일 '+
+        $('today-weekday').textContent;
+
+      unread.hidden=!state?.unread?.length;
+
+      if(lastSelf!==state?.self){
+        attention=false;
+        query='';
+        $('xl-search').value='';
+        sheet.classList.remove('xl-open');
+        draw();
+      }
+
+      lastSelf=state?.self;
+
+      const context=state
+        ?state.roomId+'|'+state.day
+        :'';
+
+      const latest=state?.messages?.at(-1)?.id||'';
+
+      if(
+        wide.matches&&
+        state&&
+        !state.loading&&
+        !nativeChat()&&
+        latest!==lastMessage
+      ){
+        if(
+          context===lastContext&&
+          attention&&
+          followBottom
+        ){
+          scroller.scrollTop=scroller.scrollHeight;
+        }else if(context===lastContext&&attention){
+          $('new-message-hint').hidden=false;
+        }
+      }
+
+      lastContext=context;
+      lastMessage=latest;
+
+      schedule();
+      layout();
+    }
+
+    S.subscribe(sync);
+
+    wide.addEventListener('change',()=>{
+      attention=false;
+      sheet.classList.remove('xl-open');
+      layout();
+    });
+
     draw();
-   }
-  };
-  $('rt-csv').onclick=()=>{
-   const s=sheets[sheet];
-   const rows=[
-    s.columns,
-    ...s.rows.map(r=>r.map((v,j)=>
-     j===4&&s.ratio?(rate(r)===null?'':rate(r)+'%'):v
-    ))
-   ];
-   const csv=rows.map(r=>r.map(v=>
-    '"'+String(
-     typeof v==='string'&&/^[=+@\-\t\r]/.test(v)?"'"+v:v
-    ).replace(/"/g,'""')+'"'
-   ).join(',')).join('\r\n');
-
-   const url=URL.createObjectURL(
-    new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'})
-   );
-   const a=make('a');
-   a.href=url;
-   a.download='연구사업단-'+s.name+'-예시.csv';
-   a.hidden=true;
-   document.body.append(a);
-   a.click();
-   a.remove();
-   setTimeout(()=>URL.revokeObjectURL(url),1000);
-  };
-
-  function layout(){
-   workspace.classList.toggle('rt-members-open',!$('page-members').hidden);
-   $('rt-close').hidden=wide.matches;
-  }
-  new MutationObserver(layout).observe(
-   $('page-members'),
-   {attributes:true,attributeFilter:['hidden']}
-  );
-
-  function stopReading(){
-   attention=false;
-   if(wide.matches&&document.querySelector('[data-tab="chat"][aria-current]')){
-    document.querySelector('[data-tab="home"]').click();
-   }
-  }
-  panel.addEventListener('pointerdown',stopReading);
-  panel.addEventListener('focusin',stopReading);
-  $('page-home').addEventListener('pointerdown',stopReading);
-  $('page-home').addEventListener('focusin',stopReading);
-
-  const schedule=()=>{
-   clearTimeout(readTimer);
-   readTimer=setTimeout(read,500);
-  };
-  chat.addEventListener('pointerdown',()=>{
-   attention=true;
-   schedule();
-  });
-  chat.addEventListener('focusin',()=>{
-   attention=true;
-   schedule();
-  });
-  $('chat-scroll').addEventListener('scroll',schedule,{passive:true});
-  document.addEventListener('visibilitychange',schedule);
-  window.addEventListener('focus',schedule);
-
-  async function read(){
-   if(
-    !wide.matches||!attention||reading||
-    document.visibilityState==='hidden'||!document.hasFocus()||
-    !$('modal').hidden||!$('page-members').hidden||workspace.hidden||
-    document.querySelector('[data-tab="chat"][aria-current]')
-   )return;
-
-   const state=S.load();
-   if(!state||state.loading||S.info().status!=='connected')return;
-
-   const rect=$('chat-scroll').getBoundingClientRect();
-   const area=workspace.getBoundingClientRect();
-   const top=Math.max(rect.top,area.top,0);
-   const bottom=Math.min(rect.bottom,area.bottom,window.innerHeight);
-   if(rect.height<=0||bottom<=top)return;
-
-   const ids=[...$('chat-messages').querySelectorAll('[data-message]')]
-    .filter(el=>{
-     const r=el.getBoundingClientRect();
-     return r.bottom>top&&r.top<bottom&&
-      state.messages.some(m=>m.id===el.dataset.message&&m.unread);
-    })
-    .map(el=>el.dataset.message);
-
-   if(!ids.length)return;
-   reading=true;
-   try{
-    await S.markRead(ids);
-   }catch(e){
-    $('message-error').textContent=e.message;
-   }finally{
-    reading=false;
-   }
+    sync(S.load());
   }
 
-  S.subscribe(state=>{
-   unread.hidden=!state?.unread?.length;
-   if(lastSelf&&lastSelf!==state?.self){
-    sheets.splice(0,sheets.length,...JSON.parse(original));
-    sheet=0;
-    query='';
-    $('rt-search').value='';
-    panel.classList.remove('rt-mobile-open');
-    attention=false;
-    draw();
-   }
-   lastSelf=state?.self||null;
-   schedule();
-   layout();
-  });
-
-  if(wide.addEventListener){
-   wide.addEventListener('change',()=>{
-    attention=false;
-    layout();
-   });
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',start,{once:true});
   }else{
-   wide.addListener(layout);
+    start();
   }
-
-  draw();
-  layout();
-  unread.hidden=!S.load()?.unread?.length;
- }
-
- if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded',start,{once:true});
- }else{
-  start();
- }
 })();
 </script>
 </body>
