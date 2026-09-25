@@ -1,40 +1,91 @@
-/* 화면 파일을 바꿔 배포할 때 CACHE_VERSION도 바꾸면 새 오프라인 파일을 준비해요. */
 'use strict';
-const CACHE_VERSION = 'researchtalk-shell-v6-excel';
+
+// 다음 업데이트에서는 v8을 v9, v10처럼 올려주세요.
+const CACHE_VERSION = 'researchtalk-shell-v8-excel-compact';
+
 const BASE = self.registration.scope;
+
 const ASSETS = [
-  './', './index.html',
-  './manifest.webmanifest', './icons/icon.svg', './icons/favicon-32.png',
-  './icons/apple-touch-icon.png', './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png'
+  './',
+  './index.html',
+  './styles.css',
+  './vendor/supabase.js',
+  './dates.js',
+  './config.js',
+  './storage.js',
+  './summary.js',
+  './app.js',
+  './manifest.webmanifest',
+  './icons/icon.svg',
+  './icons/favicon-32.png',
+  './icons/apple-touch-icon.png',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/maskable-512.png'
 ].map(path => new URL(path, BASE).href);
+
 const ASSET_SET = new Set(ASSETS);
 
+// 새 화면의 파일을 저장한 다음 새 버전을 활성화합니다.
 self.addEventListener('install', event => {
-  // 모두 받아야 설치가 완료돼요. 실패하면 이전 오프라인 버전을 보존해요.
-  event.waitUntil(caches.open(CACHE_VERSION).then(cache => cache.addAll(ASSETS)));
+  event.waitUntil(
+    caches.open(CACHE_VERSION)
+      .then(cache => cache.addAll(
+        ASSETS.map(url => new Request(url, {
+          cache: 'reload'
+        }))
+      ))
+      .then(() => self.skipWaiting())
+  );
 });
+
+// 이전 화면의 캐시를 정리합니다.
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     const names = await caches.keys();
-    await Promise.all(names.filter(name => name.startsWith('researchtalk-shell-') && name !== CACHE_VERSION).map(name => caches.delete(name)));
+
+    await Promise.all(
+      names
+        .filter(name =>
+          name.startsWith('researchtalk-shell-') &&
+          name !== CACHE_VERSION
+        )
+        .map(name => caches.delete(name))
+    );
+
     await self.clients.claim();
   })());
 });
+
+// 화면 파일만 캐시에서 제공합니다.
 self.addEventListener('fetch', event => {
   const request = event.request;
+
   if (request.method !== 'GET') return;
+
   const url = new URL(request.url);
+
   if (url.origin !== self.location.origin) return;
-  if (request.mode === 'navigate' && (url.pathname === new URL('./', BASE).pathname || url.pathname === new URL('./index.html', BASE).pathname)) {
-    event.respondWith((async () => {
-      // 화면과 코드를 같은 버전으로 불러옵니다.
-      const cached = await caches.match(new URL('./index.html', BASE).href, { cacheName: CACHE_VERSION });
-      return cached || fetch(request);
-    })());
-  } else if (ASSET_SET.has(url.href)) {
-    event.respondWith((async () => {
-      const cached = await caches.match(request, { cacheName: CACHE_VERSION });
-      return cached || fetch(request);
-    })());
-  }
+
+  // HTML에 붙어 있는 ?ui=... 주소도 같은 파일로 처리합니다.
+  url.search = '';
+
+  const isAppPage = request.mode === 'navigate' && (
+    url.pathname === new URL('./', BASE).pathname ||
+    url.pathname === new URL('./index.html', BASE).pathname
+  );
+
+  if (!isAppPage && !ASSET_SET.has(url.href)) return;
+
+  event.respondWith((async () => {
+    const key = isAppPage
+      ? new URL('./index.html', BASE).href
+      : url.href;
+
+    const cached = await caches.match(key, {
+      cacheName: CACHE_VERSION
+    });
+
+    return cached || fetch(request);
+  })());
 });
