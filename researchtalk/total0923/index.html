@@ -2454,6 +2454,230 @@ body,.app-frame,.auth-screen,.chat-scroll{
 }
 </style>
 
+
+<style id="hwp-v5-layout-style">
+/* =========================================================
+   한글 모드 v5
+   - 문서 페이지를 화면의 대부분(약 76~80%)으로 확대
+   - 오른쪽 보조열에 메모 → 달력 → 실제 채팅을 세로로 배치
+   - 채팅은 더 이상 메모처럼 위장하지 않고, 메모 패널과 분리
+   ========================================================= */
+.hwp-review-panel{display:none;}
+
+@media(min-width:1100px){
+  body[data-workspace-theme="hwp"] #workspace:not([hidden]){
+    display:block!important;
+    position:relative!important;
+    overflow:hidden!important;
+    background:#cbd1d6!important;
+  }
+
+  /* 문서 편집 면적을 최대한 넓게 */
+  body[data-workspace-theme="hwp"] .hwp-document-stage{
+    position:absolute!important;
+    inset:0 362px 23px 0!important;
+    width:auto!important;
+    height:auto!important;
+    box-sizing:border-box!important;
+    padding:38px 24px 58px 34px!important;
+    gap:30px!important;
+    overflow:auto!important;
+    align-items:center!important;
+    background:
+      linear-gradient(90deg,#b8c0c6 0 20px,transparent 20px),
+      #cfd4d8!important;
+    z-index:1!important;
+  }
+
+  body[data-workspace-theme="hwp"] .hwp-document-stage:before{
+    top:-38px!important;
+    width:calc(100% + 58px)!important;
+    margin:-38px -24px -10px -34px!important;
+    height:23px!important;
+    min-height:23px!important;
+    flex-basis:23px!important;
+  }
+
+  /* A4 비율은 유지하되, 가용 폭을 거의 다 사용 */
+  body[data-workspace-theme="hwp"] .hwp-document-page{
+    width:min(1080px,calc(100% - 18px))!important;
+    min-height:1180px!important;
+    padding:72px 82px 82px!important;
+    box-sizing:border-box!important;
+    margin:0!important;
+    box-shadow:0 2px 9px rgba(31,40,47,.22)!important;
+    border:1px solid #bfc4c8!important;
+    background:#fff!important;
+  }
+
+  /* 우측 공통 폭 */
+  body[data-workspace-theme="hwp"] .hwp-review-panel,
+  body[data-workspace-theme="hwp"] #workspace #page-home,
+  body[data-workspace-theme="hwp"] #workspace #page-chat{
+    position:absolute!important;
+    right:7px!important;
+    left:auto!important;
+    width:344px!important;
+    box-sizing:border-box!important;
+    border:1px solid #adb7bf!important;
+    background:#f8f9fa!important;
+    box-shadow:0 1px 3px rgba(34,42,48,.11)!important;
+    z-index:8!important;
+  }
+
+  /* 1) 메모/의견 */
+  body[data-workspace-theme="hwp"] .hwp-review-panel{
+    display:flex!important;
+    flex-direction:column!important;
+    top:7px!important;
+    height:170px!important;
+    overflow:hidden!important;
+  }
+  .hwp-review-head{
+    height:25px;
+    min-height:25px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 7px;
+    border-bottom:1px solid #b8c2c9;
+    background:#e8edf1;
+    color:#45515a;
+    font:600 10px/1 "Malgun Gothic","맑은 고딕",sans-serif;
+  }
+  .hwp-review-head strong:before{content:"▤ ";color:#3d89ba;}
+  .hwp-review-head span{font-size:9px;color:#7f888f;font-weight:400;}
+  .hwp-review-list{
+    flex:1;
+    min-height:0;
+    overflow:auto;
+    padding:5px 6px;
+    background:#f2f4f5;
+  }
+  .hwp-review-note{
+    margin:0 0 5px;
+    padding:5px 6px;
+    border:1px solid #aebf82;
+    background:#dcf4b6;
+    color:#33402d;
+    font:9px/1.4 "Malgun Gothic","맑은 고딕",sans-serif;
+  }
+  .hwp-review-note.alt{background:#f4d7e2;border-color:#d4aabd;color:#4a3540;}
+  .hwp-review-meta{display:flex;justify-content:space-between;gap:6px;margin-bottom:2px;}
+  .hwp-review-meta b{font-size:8px;}
+  .hwp-review-meta time{font-size:7px;color:#727b73;}
+  .hwp-review-note p{margin:0;}
+  .hwp-review-form{
+    display:flex;
+    gap:3px;
+    padding:5px;
+    border-top:1px solid #c6cdd2;
+    background:#eef1f3;
+  }
+  .hwp-review-form input{
+    flex:1;min-width:0;height:25px;min-height:25px;padding:3px 5px;
+    border:1px solid #bfc8ce;border-radius:0;background:#fff;font-size:9px;
+  }
+  .hwp-review-form button{
+    width:38px;height:25px;min-height:25px;padding:0;
+    border:1px solid #9fb2bf;border-radius:0;background:#e5edf2;color:#3c647d;font-size:9px;
+  }
+
+  /* 2) 달력: 티가 덜 나도록 아주 컴팩트하게 */
+  body[data-workspace-theme="hwp"] #workspace #page-home{
+    display:flex!important;
+    top:184px!important;
+    height:247px!important;
+    min-height:0!important;
+    overflow:hidden!important;
+    border-left:1px solid #adb7bf!important;
+    border-bottom:1px solid #adb7bf!important;
+  }
+  body[data-workspace-theme="hwp"] #page-home .xl-pane-tools{
+    display:flex!important;
+    min-height:25px!important;height:25px!important;padding:0 7px!important;
+    background:#e8edf1!important;border-bottom:1px solid #b8c2c9!important;
+  }
+  body[data-workspace-theme="hwp"] #page-home .xl-pivot-scroll{
+    flex:1!important;min-height:0!important;overflow:hidden!important;padding:6px!important;background:#f9fafb!important;
+  }
+  body[data-workspace-theme="hwp"] #page-home .calendar-panel{
+    display:block!important;margin:0!important;padding:5px 6px!important;border:0!important;background:#fff!important;
+  }
+  body[data-workspace-theme="hwp"] #page-home .calendar-panel h2{font-size:10px!important;}
+  body[data-workspace-theme="hwp"] #page-home .calendar-panel .section-heading{min-height:18px!important;}
+  body[data-workspace-theme="hwp"] #page-home .weekdays{padding:3px 0 1px!important;font-size:8px!important;}
+  body[data-workspace-theme="hwp"] #page-home .calendar-day{min-height:21px!important;height:21px!important;font-size:8px!important;}
+  body[data-workspace-theme="hwp"] #page-home .calendar-key{padding-top:3px!important;font-size:7px!important;}
+  body[data-workspace-theme="hwp"] #page-home .todo-panel,
+  body[data-workspace-theme="hwp"] #page-home .events-panel,
+  body[data-workspace-theme="hwp"] #page-home .today-heading,
+  body[data-workspace-theme="hwp"] #page-home .xl-pane-foot,
+  body[data-workspace-theme="hwp"] #page-home #xl-show-sheet{display:none!important;}
+
+  /* 3) 실제 채팅: 메모와 분리해서 평범한 업무 대화창으로 */
+  body[data-workspace-theme="hwp"] #workspace #page-chat{
+    display:flex!important;
+    top:438px!important;
+    bottom:29px!important;
+    height:auto!important;
+    min-height:180px!important;
+    overflow:hidden!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .hwp-memo-bar{
+    display:flex!important;
+    height:25px!important;min-height:25px!important;padding:0 7px!important;
+    background:#e8edf1!important;border-bottom:1px solid #b8c2c9!important;
+    color:#45515a!important;font-size:9px!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .hwp-memo-bar span:first-child{font-size:0;}
+  body[data-workspace-theme="hwp"] #page-chat .hwp-memo-bar span:first-child:before{content:"대화";font-size:9px;color:#45515a;}
+  body[data-workspace-theme="hwp"] #page-chat .hwp-memo-bar span:last-child{font-size:8px;color:#7f888f;}
+  body[data-workspace-theme="hwp"] #page-chat .chat-top{padding:4px 6px 3px!important;background:#f7f8f9!important;border-bottom:1px solid #d7dde1!important;}
+  body[data-workspace-theme="hwp"] #page-chat .chat-top h1{font-size:9px!important;color:#4d5961!important;}
+  body[data-workspace-theme="hwp"] #page-chat .chat-top h1:after{content:none!important;}
+  body[data-workspace-theme="hwp"] #page-chat .room-list{margin:2px 0 0!important;padding:0!important;gap:2px!important;}
+  body[data-workspace-theme="hwp"] #page-chat .room-chip{min-height:20px!important;height:20px!important;padding:0 5px!important;font-size:8px!important;background:#fff!important;border:1px solid #d4dade!important;color:#56636c!important;}
+  body[data-workspace-theme="hwp"] #page-chat .chat-context{padding:4px 6px!important;background:#fff!important;border-bottom:1px solid #dde2e5!important;}
+  body[data-workspace-theme="hwp"] #page-chat .chat-context strong{font-size:9px!important;}
+  body[data-workspace-theme="hwp"] #page-chat .chat-context p{display:none!important;}
+  body[data-workspace-theme="hwp"] #page-chat .xl-more{display:none!important;}
+  body[data-workspace-theme="hwp"] #page-chat .chat-scroll{
+    flex:1!important;min-height:0!important;padding:7px!important;overflow:auto!important;background:#f7f7f7!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .chat-messages{gap:6px!important;}
+  body[data-workspace-theme="hwp"] #page-chat .message,
+  body[data-workspace-theme="hwp"] #page-chat .message.mine{
+    display:block!important;position:relative!important;padding:5px 6px!important;
+    border:1px solid #d6dade!important;border-left:1px solid #d6dade!important;
+    background:#fff!important;box-shadow:none!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .message.mine{background:#edf5f9!important;border-color:#c8d9e3!important;}
+  body[data-workspace-theme="hwp"] #page-chat .message:before{display:none!important;}
+  body[data-workspace-theme="hwp"] #page-chat .message-author,
+  body[data-workspace-theme="hwp"] #page-chat .message.mine .message-author{font-size:8px!important;color:#42647a!important;}
+  body[data-workspace-theme="hwp"] #page-chat .message-bubble,
+  body[data-workspace-theme="hwp"] #page-chat .mine .message-bubble{font-size:9px!important;line-height:1.4!important;color:#333!important;}
+  body[data-workspace-theme="hwp"] #page-chat .message-meta,
+  body[data-workspace-theme="hwp"] #page-chat .mine .message-meta{font-size:7px!important;color:#8d969c!important;}
+  body[data-workspace-theme="hwp"] #page-chat .composer-wrap{padding:5px!important;background:#eef1f3!important;border-top:1px solid #d3d9dd!important;}
+  body[data-workspace-theme="hwp"] #page-chat .composer textarea{height:28px!important;min-height:28px!important;font-size:9px!important;background:#fff!important;}
+  body[data-workspace-theme="hwp"] #page-chat .send-button{height:28px!important;min-height:28px!important;width:29px!important;min-width:29px!important;background:#dbe8ef!important;color:#4a7189!important;}
+  body[data-workspace-theme="hwp"] #page-chat .composer-note{display:none!important;}
+
+  /* 상태 표시줄 */
+  body[data-workspace-theme="hwp"] .hwp-statusbar{z-index:20!important;height:23px!important;min-height:23px!important;}
+}
+
+@media(min-width:1500px){
+  body[data-workspace-theme="hwp"] .hwp-document-stage{right:374px!important;}
+  body[data-workspace-theme="hwp"] .hwp-review-panel,
+  body[data-workspace-theme="hwp"] #workspace #page-home,
+  body[data-workspace-theme="hwp"] #workspace #page-chat{width:356px!important;}
+  body[data-workspace-theme="hwp"] .hwp-document-page{width:min(1120px,calc(100% - 18px))!important;}
+}
+</style>
+
 </head>
 
 <body>
@@ -2898,6 +3122,30 @@ body,.app-frame,.auth-screen,.chat-scroll{
         <div class="hwp-page-number">- 4 -</div>
       </article>
     </section>
+
+
+    <!-- 한글 모드 전용: 실제 한글의 메모/검토 창처럼 보이는 독립 패널 -->
+    <aside class="hwp-review-panel" id="hwp-review-panel" aria-label="문서 메모">
+      <div class="hwp-review-head">
+        <strong>메모</strong>
+        <span>검토 의견</span>
+      </div>
+      <div class="hwp-review-list" id="hwp-review-list">
+        <article class="hwp-review-note">
+          <div class="hwp-review-meta"><b>[메모:1] 연구지원팀</b><time>14:12</time></div>
+          <p>표 1의 집행률 수치는 9월 말 기준으로 한 번 더 확인 부탁드립니다.</p>
+        </article>
+        <article class="hwp-review-note alt">
+          <div class="hwp-review-meta"><b>[메모:2] 성과관리팀</b><time>14:21</time></div>
+          <p>성과관리 부분에 활용계획과 후속 연계 내용을 한 문단 정도 추가하면 좋겠습니다.</p>
+        </article>
+      </div>
+      <form class="hwp-review-form" id="hwp-review-form">
+        <label class="sr-only" for="hwp-review-input">메모 입력</label>
+        <input id="hwp-review-input" maxlength="180" placeholder="메모 입력" autocomplete="off" />
+        <button type="submit">입력</button>
+      </form>
+    </aside>
 
     <!-- A–G: 연구사업 표 -->
     <section id="xl-sheet" aria-label="연구사업 관리표 · 읽기 전용 예시">
@@ -3696,6 +3944,37 @@ body,.app-frame,.auth-screen,.chat-scroll{
   }else{
     init();
   }
+})();
+</script>
+
+
+<script id="hwp-v5-review-script">
+(function(){
+  'use strict';
+  function initHwpReview(){
+    const form=document.getElementById('hwp-review-form');
+    const input=document.getElementById('hwp-review-input');
+    const list=document.getElementById('hwp-review-list');
+    if(!form||!input||!list||form.dataset.ready)return;
+    form.dataset.ready='1';
+    form.addEventListener('submit',function(e){
+      e.preventDefault();
+      const value=input.value.trim();
+      if(!value)return;
+      const item=document.createElement('article');
+      item.className='hwp-review-note';
+      const now=new Date();
+      const hh=String(now.getHours()).padStart(2,'0');
+      const mm=String(now.getMinutes()).padStart(2,'0');
+      item.innerHTML='<div class="hwp-review-meta"><b>[메모] 나</b><time>'+hh+':'+mm+'</time></div><p></p>';
+      item.querySelector('p').textContent=value;
+      list.appendChild(item);
+      input.value='';
+      list.scrollTop=list.scrollHeight;
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initHwpReview,{once:true});
+  else initHwpReview();
 })();
 </script>
 
