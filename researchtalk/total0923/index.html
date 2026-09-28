@@ -1601,6 +1601,172 @@ body,.app-frame,.auth-screen,.chat-scroll{
     color:#1683cf;
   }
 }
+
+
+/* 한글 문서 본문 모형 */
+.hwp-document-stage{display:none;}
+
+@media(min-width:1100px){
+  body[data-workspace-theme="hwp"] #workspace:not([hidden]){
+    background:#d7dce1;
+    background-image:none;
+  }
+
+  body[data-workspace-theme="hwp"] .hwp-document-stage{
+    display:flex;
+    grid-column:1;
+    grid-row:1;
+    min-width:0;
+    min-height:0;
+    overflow:auto;
+    position:relative;
+    align-items:flex-start;
+    justify-content:center;
+    padding:38px 34px 56px;
+    background:
+      linear-gradient(90deg,rgba(255,255,255,.12),transparent 17%,transparent 83%,rgba(255,255,255,.12)),
+      #d7dce1;
+    scrollbar-width:thin;
+  }
+
+  .hwp-document-stage:before{
+    content:"";
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    height:24px;
+    border-bottom:1px solid #adb7c0;
+    background:
+      repeating-linear-gradient(90deg,#89949e 0 1px,transparent 1px 18px),
+      #eef1f3;
+    opacity:.9;
+  }
+
+  .hwp-document-page{
+    width:min(760px,calc(100% - 20px));
+    min-height:1040px;
+    box-sizing:border-box;
+    background:#fff;
+    color:#202020;
+    border:1px solid #b8bec4;
+    box-shadow:0 3px 12px rgba(42,51,59,.24);
+    padding:76px 74px 82px;
+    font-family:"Batang","바탕","함초롬바탕","Malgun Gothic",serif;
+    font-size:14px;
+    line-height:1.85;
+    position:relative;
+  }
+
+  .hwp-document-page:before,
+  .hwp-document-page:after{
+    content:"";
+    position:absolute;
+    top:46px;
+    width:24px;
+    height:24px;
+    border-top:1px solid #c5c9cd;
+  }
+  .hwp-document-page:before{left:35px;border-left:1px solid #c5c9cd;}
+  .hwp-document-page:after{right:35px;border-right:1px solid #c5c9cd;}
+
+  .hwp-report-kicker{
+    margin:0 0 9px;
+    color:#6d747a;
+    text-align:right;
+    font-family:"Malgun Gothic","맑은 고딕",sans-serif;
+    font-size:11px;
+    letter-spacing:.02em;
+  }
+
+  .hwp-report-title{
+    margin:0 0 8px;
+    text-align:center;
+    font-size:25px;
+    line-height:1.45;
+    font-weight:700;
+    letter-spacing:-.04em;
+  }
+
+  .hwp-report-subtitle{
+    margin:0 0 42px;
+    text-align:center;
+    color:#555;
+    font-size:13px;
+  }
+
+  .hwp-report-section{
+    margin:25px 0 10px;
+    padding:7px 10px;
+    background:#eef3f8;
+    border-left:4px solid #5e87aa;
+    font-family:"Malgun Gothic","맑은 고딕",sans-serif;
+    font-size:16px;
+    font-weight:700;
+    line-height:1.4;
+  }
+
+  .hwp-report-subhead{
+    margin:17px 0 5px;
+    font-weight:700;
+    font-size:14px;
+  }
+
+  .hwp-report-paragraph{
+    margin:4px 0 9px;
+    text-align:justify;
+    word-break:keep-all;
+  }
+
+  .hwp-report-list{
+    margin:5px 0 14px 20px;
+    padding:0;
+  }
+  .hwp-report-list li{margin:3px 0;padding-left:2px;}
+
+  .hwp-report-table-title{
+    margin:18px 0 5px;
+    text-align:center;
+    font-size:12px;
+    font-weight:700;
+  }
+
+  .hwp-report-table{
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+    margin:0 0 17px;
+    font-family:"Malgun Gothic","맑은 고딕",sans-serif;
+    font-size:11px;
+    line-height:1.45;
+  }
+  .hwp-report-table th,
+  .hwp-report-table td{
+    border:1px solid #737373;
+    padding:6px 7px;
+    text-align:center;
+    vertical-align:middle;
+  }
+  .hwp-report-table th{background:#fff4c9;font-weight:700;}
+  .hwp-report-table td:first-child{text-align:left;}
+
+  .hwp-report-note{
+    margin:8px 0 0;
+    color:#626262;
+    font-size:11px;
+  }
+
+  .hwp-report-cursor{
+    display:inline-block;
+    width:1px;
+    height:1.2em;
+    background:#2189d6;
+    vertical-align:-.2em;
+    margin-left:2px;
+    animation:hwp-caret 1.05s steps(1,end) infinite;
+  }
+  @keyframes hwp-caret{50%{opacity:0;}}
+}
 </style>
 
 </head>
@@ -1862,6 +2028,66 @@ body,.app-frame,.auth-screen,.chat-scroll{
   </button>
 
   <main id="workspace" class="workspace" hidden>
+
+
+    <!-- 한글 모드: 실제 문서처럼 보이는 보고서 본문 -->
+    <section class="hwp-document-stage" id="hwp-document-stage" aria-label="한글 보고서 편집 화면 모형">
+      <article class="hwp-document-page">
+        <p class="hwp-report-kicker">연구사업단 내부 검토자료 · 2026. 9.</p>
+        <h1 class="hwp-report-title">2026년 연구사업 운영현황 및 주요 추진과제</h1>
+        <p class="hwp-report-subtitle">연구사업단 과제관리 및 성과점검을 위한 내부 보고</p>
+
+        <h2 class="hwp-report-section">Ⅰ. 연구사업 추진 현황</h2>
+        <h3 class="hwp-report-subhead">1. 사업 개요</h3>
+        <p class="hwp-report-paragraph">
+          우리 연구사업단은 연구데이터 구축, 산학협력, 실증지원 및 국제공동연구를 중심으로 세부 과제를 운영하고 있다.
+          2026년에는 과제별 일정과 예산 집행상황을 정기적으로 점검하고, 연구성과의 활용 가능성을 높이기 위한 후속 관리에 중점을 두고 있다.
+        </p>
+        <ul class="hwp-report-list">
+          <li><b>과제관리</b> : 월별 추진일정과 주요 산출물을 기준으로 진행상황 점검</li>
+          <li><b>예산관리</b> : 집행률이 낮은 과제를 중심으로 집행계획 및 잔여일정 재확인</li>
+          <li><b>성과관리</b> : 논문·협약·실증·데이터 구축 등 과제별 성과를 정기 취합</li>
+        </ul>
+
+        <h3 class="hwp-report-subhead">2. 주요 추진 실적</h3>
+        <p class="hwp-report-paragraph">
+          9월 현재 대부분의 과제가 계획된 일정에 따라 진행되고 있으며, 데이터 기반 과제와 산학 공동연구 과제의 집행이 비교적 안정적으로 이루어지고 있다.
+          일부 실증 과제는 외부기관 협의 일정에 따라 추진시기가 조정되고 있어 월말까지 세부 일정을 다시 확인할 예정이다.
+        </p>
+
+        <div class="hwp-report-table-title">&lt;표 1&gt; 주요 연구과제 추진현황</div>
+        <table class="hwp-report-table" aria-label="주요 연구과제 추진현황">
+          <thead>
+            <tr>
+              <th style="width:31%">세부 연구과제</th>
+              <th style="width:18%">책임부서</th>
+              <th style="width:15%">집행률</th>
+              <th style="width:18%">주요 성과</th>
+              <th style="width:18%">진행상태</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>연구데이터 통합 기반</td><td>데이터연구팀</td><td>70.0%</td><td>논문 4편</td><td>수행 중</td></tr>
+            <tr><td>산학 공동연구 플랫폼</td><td>산학협력팀</td><td>70.0%</td><td>협약 8건</td><td>수행 중</td></tr>
+            <tr><td>실증 및 성과 검증</td><td>실증지원팀</td><td>42.0%</td><td>실증 3건</td><td>자료 수집</td></tr>
+            <tr><td>국제 공동연구 네트워크</td><td>국제협력팀</td><td>45.0%</td><td>교류 5회</td><td>협약 진행</td></tr>
+          </tbody>
+        </table>
+
+        <h2 class="hwp-report-section">Ⅱ. 향후 일정 및 검토사항</h2>
+        <p class="hwp-report-paragraph">
+          향후에는 과제별 집행률과 성과자료를 함께 확인하여 차년도 사업계획에 반영하고, 반복적으로 발생하는 일정 지연 사유를 유형화하여 관리체계를 보완할 필요가 있다.
+          특히 외부 협력기관과 연계된 과제는 협약·자료제출 일정을 사전에 공유하여 사업 종료 시점의 업무집중을 최소화하고자 한다.
+        </p>
+        <ul class="hwp-report-list">
+          <li>10월 초 : 3분기 연구성과 및 예산 집행현황 취합</li>
+          <li>10월 중 : 차년도 신규·계속과제 검토회의 개최</li>
+          <li>11월 중 : 연간 성과보고서 초안 작성 및 부서별 확인</li>
+        </ul>
+
+        <p class="hwp-report-note">※ 본 자료는 연구사업단 내부 업무관리용 예시 문서이며 수치는 화면 구성용으로 작성함.<span class="hwp-report-cursor" aria-hidden="true"></span></p>
+      </article>
+    </section>
 
     <!-- A–G: 연구사업 표 -->
     <section id="xl-sheet" aria-label="연구사업 관리표 · 읽기 전용 예시">
