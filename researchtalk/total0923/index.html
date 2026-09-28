@@ -2907,6 +2907,22 @@ body,.app-frame,.auth-screen,.chat-scroll{
   body[data-workspace-theme="hwp"] .hwp-review-panel{right:426px!important;}
   body[data-workspace-theme="hwp"] .hwp-document-page{width:min(1240px,calc(100% - 18px))!important;}
 }
+
+/* v7: 읽지 않은 메시지 표시 — 브라우저 탭/대화 탭은 빨간 점으로 표시 */
+.bottom-nav button[data-tab="chat"].has-unread .icon{
+  display:none!important;
+}
+.bottom-nav button[data-tab="chat"].has-unread .unread-dot{
+  display:inline-block!important;
+  width:9px!important;
+  height:9px!important;
+  min-width:9px;
+  border-radius:50%!important;
+  background:#d93025!important;
+  box-shadow:0 0 0 1px rgba(217,48,37,.12);
+  margin:0 5px 0 0!important;
+  vertical-align:middle;
+}
 </style>
 
 </head>
@@ -3710,6 +3726,28 @@ body,.app-frame,.auth-screen,.chat-scroll{
     const sheet=$('xl-sheet');
     const scroller=$('chat-scroll');
 
+
+    /* 읽지 않은 메시지가 있으면 브라우저 탭 아이콘 자체를 빨간 점으로 교체 */
+    const browserIcon=document.querySelector('link[rel~="icon"]');
+    const normalBrowserIcon=browserIcon?.getAttribute('href')||'./icons/favicon-32.png';
+    const unreadBrowserIcon='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%229%22 fill=%22%23d93025%22/%3E%3C/svg%3E';
+
+    function updateUnreadIndicators(hasUnread){
+      if(browserIcon){
+        browserIcon.setAttribute('href',hasUnread?unreadBrowserIcon:normalBrowserIcon);
+      }
+
+      const chatTab=document.querySelector('.bottom-nav [data-tab="chat"]');
+      const dot=chatTab?.querySelector('.unread-dot');
+
+      if(chatTab){
+        chatTab.classList.toggle('has-unread',hasUnread);
+      }
+      if(dot){
+        dot.hidden=!hasUnread;
+      }
+    }
+
     /* 왼쪽 표에 표시할 화면용 연구사업 예시 */
     const examples=[
       ['연구데이터 통합 기반','데이터연구팀',180,126,'논문 4편','수행 중'],
@@ -4045,6 +4083,7 @@ body,.app-frame,.auth-screen,.chat-scroll{
         $('today-weekday').textContent;
 
       unread.hidden=!state?.unread?.length;
+      updateUnreadIndicators(!!state?.unread?.length);
 
       if(lastSelf!==state?.self){
         attention=false;
