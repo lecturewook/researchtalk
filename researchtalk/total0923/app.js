@@ -271,5 +271,23 @@ main.append(
   setInterval(()=>{const today=D.today();if(today===lastToday||!data)return;const old=lastToday;lastToday=today;if(selectedDay===old){selectedDay=today;calendarMonth=today.slice(0,7)+'-01';}renderHome();if(data.day===old)S.view(data.roomId,today).catch(()=>{});},60000);
   S.subscribe(render);render(null,S.info());
   S.init().then(()=>{const p=S.pendingInvite();if(p.code&&!$('auth-invite').value){$('auth-invite').value=p.code;$('auth-name').value=p.name;authMode='signup';renderAuth();}});
-  if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))g.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+  if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){
+    const hadController=!!navigator.serviceWorker.controller;
+    let refreshing=false;
+
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{
+      if(!hadController||refreshing)return;
+      refreshing=true;
+      location.reload();
+    });
+
+    g.addEventListener('load',()=>{
+      navigator.serviceWorker.register('./sw.js',{
+        updateViaCache:'none'
+      }).catch(()=>{});
+    });
+  }
+
 })(window);
+
+
