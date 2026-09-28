@@ -1,7 +1,7 @@
 'use strict';
 
 // 다음 업데이트에서는 v8을 v9, v10처럼 올려주세요.
-const CACHE_VERSION = 'researchtalk-shell-v10-excel-compact';
+const CACHE_VERSION = 'researchtalk-shell-v9-excel-compact';
 
 const BASE = self.registration.scope;
 
