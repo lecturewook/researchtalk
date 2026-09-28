@@ -134,7 +134,25 @@
         const mine=m.authorId===data.self,row=node('article','message'+(mine?' mine':'')),main=node('div','message-main');
         row.dataset.message=m.id;
         if(boundary?.id===m.id&&boundary.roomId===data.roomId)list.append(node('div','unread-divider','여기부터 읽지 않은 대화'));
-        row.append(avatar(m.authorId));main.append(node('p','message-author',(member(m.authorId)?.name||'참여자')+(mine?' · 나':'')),node('div','message-bubble',m.text));
+        
+        //row.append(avatar(m.authorId));main.append(node('p','message-author',(member(m.authorId)?.name||'참여자')+(mine?' · 나':'')),node('div','message-bubble',m.text));
+
+        row.append(avatar(m.authorId));
+
+const bubble = node('div', 'message-bubble', m.text);
+bubble.style.background = colors[
+  Math.max(0, data.members.findIndex(x => x.id === m.authorId)) % colors.length
+];
+
+main.append(
+  node(
+    'p',
+    'message-author',
+    (member(m.authorId)?.name || '참여자') + (mine ? ' · 나' : '')
+  ),
+  bubble
+);
+        
         const meta=node('div','message-meta');meta.append(node('span','',m.localTime));
         if(mine){const b=button('삭제','message-delete',()=>confirmAction('대화를 지울까요?','상대 화면에서도 사라지고 이날 요약도 지워져요.',()=>S.apply('message.delete',{id:m.id})));b.disabled=!connected();meta.append(b);}main.append(meta);row.append(main);list.append(row);
       }
