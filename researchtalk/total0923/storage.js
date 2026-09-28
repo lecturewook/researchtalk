@@ -170,13 +170,54 @@
   }
   function setDraft(roomId,text){if(!session)return;const key='drafts:'+session.user.id,a=object(key,{});if(text)a[roomId]=text;else delete a[roomId];put(key,JSON.stringify(a));}
   function draft(roomId){return session?object('drafts:'+session.user.id,{})[roomId]||'':'';}
-  async function send(text){
-    if(day!==D.today())throw new Error('오늘 대화로 돌아와 보내주세요.');
-    text=text.trim();if(!text||text.length>1000)throw new Error('대화는 1~1,000자로 입력해 주세요.');
-    const k=session?.user.id+'|'+room+'|'+day;let request=pendingMessages.get(k);
-    if(!request||request.text!==text){const now=new Date();request={id:uuid(),roomId:room,day,text,time:String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')};pendingMessages.set(k,request);}
-    await apply('message.add',request);pendingMessages.delete(k);return request;
+
+  async function send(text,replyTo=null){
+  if(day!==D.today())throw new Error('오늘 대화로 돌아와 보내주세요.');
+
+  text=text.trim();
+  if(!text||text.length>1000){
+    throw new Error('대화는 1~1,000자로 입력해 주세요.');
   }
+
+  replyTo=replyTo||null;
+
+  const k=session?.user.id+'|'+room+'|'+day;
+  let request=pendingMessages.get(k);
+
+  if(
+    !request||
+    request.text!==text||
+    request.replyTo!==replyTo
+  ){
+    const now=new Date();
+
+    request={
+      id:uuid(),
+      roomId:room,
+      day,
+      text,
+      replyTo,
+      time:
+        String(now.getHours()).padStart(2,'0')+
+        ':'+
+        String(now.getMinutes()).padStart(2,'0')
+    };
+
+    pendingMessages.set(k,request);
+  }
+
+  await apply('message.add',request);
+  pendingMessages.delete(k);
+  return request;
+}
+  
+  //-async function send(text){
+    //if(day!==D.today())throw new Error('오늘 대화로 돌아와 보내주세요.');
+    //text=text.trim();if(!text||text.length>1000)throw new Error('대화는 1~1,000자로 입력해 주세요.');
+    //const k=session?.user.id+'|'+room+'|'+day;let request=pendingMessages.get(k);
+    //if(!request||request.text!==text){const now=new Date();request={id:uuid(),roomId:room,day,text,time:String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')};pendingMessages.set(k,request);}
+    //await apply('message.add',request);pendingMessages.delete(k);return request;
+  //}
   function exportDay(){
     if(!state?.messages.length)throw new Error('이 날짜에는 저장할 대화가 없어요.');
     const names=Object.fromEntries(state.members.map(m=>[m.id,m.name]));
