@@ -2925,6 +2925,42 @@ body,.app-frame,.auth-screen,.chat-scroll{
 }
 </style>
 
+
+<style id="notification-sound-style">
+/* 메시지 알림음 토글: Excel/한글 제목줄에 자연스럽게 붙는 작은 버튼 */
+.notification-sound-toggle{
+  display:none;
+  align-items:center;
+  justify-content:center;
+  width:29px;
+  min-width:29px;
+  height:25px;
+  min-height:25px;
+  padding:0;
+  border:1px solid rgba(255,255,255,.35);
+  border-radius:4px;
+  background:rgba(255,255,255,.10);
+  color:inherit;
+  font-size:14px;
+  line-height:1;
+  cursor:pointer;
+  flex-shrink:0;
+}
+.notification-sound-toggle:hover{background:rgba(255,255,255,.18);}
+.notification-sound-toggle[aria-pressed="false"]{opacity:.62;}
+.notification-sound-toggle .sound-icon{transform:translateY(-.5px);}
+
+@media(min-width:1100px){
+  .notification-sound-toggle{display:inline-flex;}
+  body[data-workspace-theme="hwp"] .notification-sound-toggle{
+    border-color:#c7d3dc;
+    background:#f8fbfd;
+    color:#536a7a;
+  }
+  body[data-workspace-theme="hwp"] .notification-sound-toggle:hover{background:#eef5fa;}
+}
+</style>
+
 </head>
 
 <body>
@@ -2977,6 +3013,12 @@ body,.app-frame,.auth-screen,.chat-scroll{
       <button type="button" data-workspace-theme="excel" aria-pressed="true">Excel</button>
       <button type="button" data-workspace-theme="hwp" aria-pressed="false">한글</button>
     </div>
+
+    <button id="notification-sound-toggle" class="notification-sound-toggle"
+            type="button" aria-pressed="true"
+            aria-label="메시지 알림음 끄기" title="메시지 알림음 켜기/끄기">
+      <span class="sound-icon" aria-hidden="true">🔊</span>
+    </button>
 
     <div class="xl-title-search" aria-hidden="true">
       <svg class="icon" viewBox="0 0 24 24">
@@ -3768,6 +3810,157 @@ body,.app-frame,.auth-screen,.chat-scroll{
       }
     }
 
+    /* -------------------------------------------------------
+       조용한 '찰칵' 메시지 알림음
+       - 기본값: 켜짐
+       - 제목줄의 🔊/🔇 버튼으로 언제든 끄고 켤 수 있음
+       - 별도 mp3 파일 없이 Web Audio API로 아주 짧게 합성
+       - 브라우저 정책상 사용자가 페이지를 한 번 클릭/키입력한 뒤부터 재생 가능
+    ------------------------------------------------------- */
+    const SOUND_KEY='researchtalk.notificationSound';
+    const soundToggle=$('notification-sound-toggle');
+    let soundEnabled=true;
+    let audioContext=null;
+    let soundStateReady=false;
+    let previousUnreadRooms=new Map();
+    let previousLatestMessageId='';
+
+    try{
+      soundEnabled=localStorage.getItem(SOUND_KEY)!=='off';
+    }catch(_){
+      soundEnabled=true;
+    }
+
+    function paintSoundToggle(){
+      if(!soundToggle)return;
+      soundToggle.setAttribute('aria-pressed',String(soundEnabled));
+      soundToggle.setAttribute(
+        'aria-label',
+        soundEnabled?'메시지 알림음 끄기':'메시지 알림음 켜기'
+      );
+      const icon=soundToggle.querySelector('.sound-icon');
+      if(icon)icon.textContent=soundEnabled?'🔊':'🔇';
+    }
+
+    function ensureAudioContext(){
+      if(!soundEnabled)return null;
+      const AudioCtx=window.AudioContext||window.webkitAudioContext;
+      if(!AudioCtx)return null;
+      try{
+        if(!audioContext)audioContext=new AudioCtx();
+        if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});
+        return audioContext;
+      }catch(_){
+        return null;
+      }
+    }
+
+    function shutterBurst(ctx,when,duration,volume,highpass){
+      const rate=ctx.sampleRate;
+      const length=Math.max(1,Math.floor(rate*duration));
+      const buffer=ctx.createBuffer(1,length,rate);
+      const data=buffer.getChannelData(0);
+      for(let i=0;i<length;i++){
+        const envelope=Math.pow(1-i/length,2.8);
+        data[i]=(Math.random()*2-1)*envelope;
+      }
+      const source=ctx.createBufferSource();
+      const filter=ctx.createBiquadFilter();
+      const gain=ctx.createGain();
+      filter.type='highpass';
+      filter.frequency.value=highpass;
+      gain.gain.setValueAtTime(volume,when);
+      gain.gain.exponentialRampToValueAtTime(0.0001,when+duration);
+      source.buffer=buffer;
+      source.connect(filter).connect(gain).connect(ctx.destination);
+      source.start(when);
+      source.stop(when+duration+.01);
+    }
+
+    function playShutterSound(){
+      if(!soundEnabled)return;
+      const ctx=ensureAudioContext();
+      if(!ctx||ctx.state!=='running')return;
+      const now=ctx.currentTime+.005;
+      /* '찰-칵' 두 번의 아주 짧은 기계음. 전체 음량은 낮게 유지 */
+      shutterBurst(ctx,now,.032,.032,1500);
+      shutterBurst(ctx,now+.045,.022,.024,2100);
+    }
+
+    function unreadRoomMap(unreadList){
+      const map=new Map();
+      for(const item of Array.isArray(unreadList)?unreadList:[]){
+        if(!item||typeof item!=='object')continue;
+        const room=String(item.roomId??item.room_id??item.room??'');
+        if(!room)continue;
+        const marker=String(
+          item.messageId??item.message_id??item.id??
+          item.createdAt??item.created_at??item.sentAt??item.sent_at??''
+        );
+        map.set(room,marker);
+      }
+      return map;
+    }
+
+    function hasNewUnreadOutsideCurrent(state,currentLatestId){
+      const next=unreadRoomMap(state?.unread);
+      let fresh=false;
+      for(const [room,marker] of next){
+        if(!previousUnreadRooms.has(room)){
+          fresh=true;
+          break;
+        }
+        const oldMarker=previousUnreadRooms.get(room);
+        /* 식별자가 실제로 제공되는 경우 같은 방의 추가 메시지도 감지 */
+        if(marker&&oldMarker&&marker!==oldMarker&&currentLatestId===previousLatestMessageId){
+          fresh=true;
+          break;
+        }
+      }
+      previousUnreadRooms=next;
+      return fresh;
+    }
+
+    function maybePlayIncomingSound(state,latestMessage){
+      const latestId=latestMessage?.id||'';
+      const currentRoomIncoming=!!(
+        soundStateReady&&
+        latestId&&
+        latestId!==previousLatestMessageId&&
+        latestMessage?.unread
+      );
+      const otherRoomIncoming=soundStateReady
+        ?hasNewUnreadOutsideCurrent(state,latestId)
+        :(previousUnreadRooms=unreadRoomMap(state?.unread),false);
+
+      if(soundStateReady&&(currentRoomIncoming||otherRoomIncoming)){
+        playShutterSound();
+      }
+
+      previousLatestMessageId=latestId;
+      soundStateReady=true;
+    }
+
+    paintSoundToggle();
+
+    /* 오디오 재생 권한을 사용자의 첫 상호작용에서 미리 활성화 */
+    const armAudio=()=>{
+      if(soundEnabled)ensureAudioContext();
+    };
+    document.addEventListener('pointerdown',armAudio,{capture:true,once:true});
+    document.addEventListener('keydown',armAudio,{capture:true,once:true});
+
+    soundToggle?.addEventListener('click',()=>{
+      soundEnabled=!soundEnabled;
+      try{localStorage.setItem(SOUND_KEY,soundEnabled?'on':'off')}catch(_){}
+      paintSoundToggle();
+      if(soundEnabled){
+        ensureAudioContext();
+        /* 켰을 때 현재 음량을 바로 확인할 수 있도록 한 번만 작게 테스트 */
+        setTimeout(playShutterSound,25);
+      }
+    });
+
     /* 왼쪽 표에 표시할 화면용 연구사업 예시 */
     const examples=[
       ['연구데이터 통합 기반','데이터연구팀',180,126,'논문 4편','수행 중'],
@@ -4119,7 +4312,11 @@ body,.app-frame,.auth-screen,.chat-scroll{
         ?state.roomId+'|'+state.day
         :'';
 
-      const latest=state?.messages?.at(-1)?.id||'';
+      const latestMessage=state?.messages?.at(-1)||null;
+      const latest=latestMessage?.id||'';
+
+      /* 새로 도착한 읽지 않은 메시지에서만 조용한 '찰칵' 소리 */
+      maybePlayIncomingSound(state,latestMessage);
 
       if(
         wide.matches&&
