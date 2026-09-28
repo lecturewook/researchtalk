@@ -1088,6 +1088,10 @@
         /*
          * 답장 대상 메시지가 있다면
          * 말풍선 위에 원본 메시지를 표시합니다.
+         *
+         * 중요:
+         * target을 찾지 못해도 현재 메시지 본문은
+         * 아래에서 항상 별도로 렌더링됩니다.
          */
         if(m.replyTo){
           const target=
@@ -1096,12 +1100,21 @@
             );
 
           if(target){
-            const quote=node(
-              'button',
-              'reply-quote'
-            );
+            const quote=button(
+              '',
+              'reply-quote',
+              ()=>{
+                const targetEl=
+                  document.querySelector(
+                    `[data-message="${target.id}"]`
+                  );
 
-            quote.type='button';
+                targetEl?.scrollIntoView({
+                  behavior:'smooth',
+                  block:'center'
+                });
+              }
+            );
 
             quote.append(
               node(
@@ -1123,39 +1136,24 @@
 
             quote.setAttribute(
               'aria-label',
-              '답장한 원본 메시지 보기'
+              '답장한 원래 메시지로 이동'
             );
 
-            quote.onclick=()=>{
-              const targetEl=
-                document.querySelector(
-                  `[data-message="${target.id}"]`
-                );
-
-              targetEl?.scrollIntoView({
-                behavior:'smooth',
-                block:'center'
-              });
-            };
-
-            bubble.append(
-              quote,
-              node(
-                'div',
-                'message-text-content',
-                m.text
-              )
-            );
-          }else{
-            /*
-             * 원본 메시지가 삭제된 경우
-             * 일반 메시지처럼 보여줍니다.
-             */
-            bubble.textContent=m.text;
+            bubble.append(quote);
           }
-        }else{
-          bubble.textContent=m.text;
         }
+
+        /*
+         * ★ 답장 여부와 관계없이
+         * 현재 메시지의 실제 본문은 항상 출력합니다.
+         */
+        bubble.append(
+          node(
+            'div',
+            'message-text-content',
+            m.text
+          )
+        );
 
         /*
          * 기존 메시지별 배경색 유지
