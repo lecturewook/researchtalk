@@ -4,6 +4,8 @@
   let data=null,info=S.info(),tab='home',selectedDay=D.today(),calendarMonth=selectedDay.slice(0,7)+'-01',authMode=S.pendingInvite().code?'signup':'login';
   let opening=false,readBusy=false,readTimer,boundary=null;
   let renderedChat='',renderedRoom='',toastTimer,modalReturn=null,lastToday=D.today(),sending=false;
+let replyTarget=null;
+  //let renderedChat='',renderedRoom='',toastTimer,modalReturn=null,lastToday=D.today(),sending=false;
   const colors=['#e9e2f6','#deeee7','#f8e2e5','#e2eaf8','#f5ead9','#e3edf0'];
   const node=(tag,className,text)=>{const n=document.createElement(tag);if(className)n.className=className;if(text!==undefined)n.textContent=text;return n;};
   const icon=name=>{const n=document.createElementNS('http://www.w3.org/2000/svg','svg');n.setAttribute('class','icon');n.setAttribute('aria-hidden','true');const use=document.createElementNS('http://www.w3.org/2000/svg','use');use.setAttribute('href','#i-'+name);n.append(use);return n;};
@@ -152,9 +154,45 @@ main.append(
   ),
   bubble
 );
-        
-        const meta=node('div','message-meta');meta.append(node('span','',m.localTime));
-        if(mine){const b=button('삭제','message-delete',()=>confirmAction('대화를 지울까요?','상대 화면에서도 사라지고 이날 요약도 지워져요.',()=>S.apply('message.delete',{id:m.id})));b.disabled=!connected();meta.append(b);}main.append(meta);row.append(main);list.append(row);
+        const meta=node('div','message-meta');
+meta.append(node('span','',m.localTime));
+
+const replyButton=button(
+  '답장',
+  'message-reply',
+  ()=>{
+    replyTarget={
+      id:m.id,
+      authorId:m.authorId,
+      text:m.text
+    };
+    renderReplyBar();
+    $('message-text').focus();
+  }
+);
+
+replyButton.disabled=!connected();
+meta.append(replyButton);
+
+if(mine){
+  const b=button(
+    '삭제',
+    'message-delete',
+    ()=>confirmAction(
+      '대화를 지울까요?',
+      '상대 화면에서도 사라지고 이날 요약도 지워져요.',
+      ()=>S.apply('message.delete',{id:m.id})
+    )
+  );
+
+  b.disabled=!connected();
+  meta.append(b);
+}
+
+main.append(meta); row.append(main);list.append(row);
+        //const meta=node('div','message-meta');meta.append(node('span','',m.localTime));
+        //if(mine){const b=button('삭제','message-delete',()=>confirmAction('대화를 지울까요?','상대 화면에서도 사라지고 이날 요약도 지워져요.',()=>S.apply('message.delete',{id:m.id})));b.disabled=!connected();meta.append(b);}main.append(meta);
+        //row.append(main);list.append(row);
       }
       if(tab==='chat'&&!opening&&!boundary&&(atBottom||changed||force))setTimeout(scrollBottom,0);else if(tab==='chat'&&!atBottom)$('new-message-hint').hidden=false;
     }
@@ -289,5 +327,54 @@ main.append(
   }
 
 })(window);
+
+
+
+function renderReplyBar(){
+  let bar=document.querySelector('.reply-bar');
+
+  if(!bar){
+    bar=node('div','reply-bar');
+
+    const form=$('message-form');
+    form.parentNode.insertBefore(bar,form);
+  }
+
+  bar.replaceChildren();
+
+  if(!replyTarget){
+    bar.hidden=true;
+    return;
+  }
+
+  bar.hidden=false;
+
+  const author=member(replyTarget.authorId)?.name||'참여자';
+
+  const text=node(
+    'div',
+    'reply-bar-text'
+  );
+
+  text.append(
+    node('strong','',`↩ ${author}`),
+    node('span','',replyTarget.text.length>80
+      ?replyTarget.text.slice(0,80)+'…'
+      :replyTarget.text
+    )
+  );
+
+  const close=button(
+    '×',
+    'reply-bar-close',
+    ()=>{
+      replyTarget=null;
+      renderReplyBar();
+    }
+  );
+
+  bar.append(text,close);
+}
+
 
 
