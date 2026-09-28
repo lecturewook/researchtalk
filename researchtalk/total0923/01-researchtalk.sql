@@ -1,3 +1,227 @@
+-- researchtalk 전용 저장소. 기존 couple_* 데이터는 수정하지 않습니다.
+-- Supabase SQL Editor에서 전체를 한 번 실행합니다. 재실행해도 기록을 보존합니다.
+begin;
+
+create table if not exists public.rt_workspace (
+  id integer primary key check (id=1)
+);
+insert into public.rt_workspace values (1) on conflict do nothing;
+
+create table if not exists public.rt_members (
+  user_id uuid primary key references auth.users(id),
+  name text not null check (char_length(btrim(name)) between 1 and 20),
+  joined_at timestamptz not null default now()
+);
+create table if not exists public.rt_signals (
+  user_id uuid primary key references public.rt_members(user_id),
+  revision bigint not null default 0
+);
+create table if not exists public.rt_invites (
+  code uuid primary key default gen_random_uuid(),
+  created_by uuid not null references public.rt_members(user_id),
+  expires_at timestamptz not null default (now()+interval '7 days'),
+  consumed_by uuid references auth.users(id),
+  revoked boolean not null default false
+);
+create table if not exists public.rt_rooms (
+  id uuid primary key default gen_random_uuid(),
+  kind text not null check (kind in ('group','direct')),
+  user_a uuid references public.rt_members(user_id),
+  user_b uuid references public.rt_members(user_id),
+  invited_by uuid references public.rt_members(user_id),
+  status text not null default 'active' check (status in ('pending','active','declined')),
+  created_at timestamptz not null default now(),
+  unique(user_a,user_b),
+  check ((kind='group' and user_a is null and user_b is null and status='active') or
+    (kind='direct' and user_a is not null and user_b is not null and user_a<user_b
+      and invited_by is not null and invited_by in (user_a,user_b)))
+);
+create unique index if not exists rt_one_group on public.rt_rooms(kind) where kind='group';
+insert into public.rt_rooms(id,kind) values ('00000000-0000-4000-8000-000000000001','group') on conflict do nothing;
+
+create table if not exists public.rt_messages (
+  id uuid primary key,
+  room_id uuid not null references public.rt_rooms(id),
+  author_id uuid not null references public.rt_members(user_id),
+  body text not null check(char_length(btrim(body)) between 1 and 1000),
+  day date not null check(day between date '1900-01-01' and date '2200-12-31'),
+  local_time text not null check(local_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'),
+
+  -- 답장 기능: 원본 메시지 ID. 원본 삭제 시 답장 본문은 남기고 연결만 해제합니다.
+  reply_to uuid references public.rt_messages(id) on delete set null,
+
+  created_at timestamptz not null default clock_timestamp()
+);
+
+-- 기존 설치본을 재실행해도 기존 메시지를 보존하면서 reply_to만 추가합니다.
+alter table public.rt_messages
+  add column if not exists reply_to uuid;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname='rt_messages_reply_to_fkey'
+      and conrelid='public.rt_messages'::regclass
+  ) then
+    alter table public.rt_messages
+      add constraint rt_messages_reply_to_fkey
+      foreign key (reply_to)
+      references public.rt_messages(id)
+      on delete set null;
+  end if;
+end $$;
+
+create index if not exists rt_messages_day on public.rt_messages(room_id,day,created_at,id);
+create index if not exists rt_messages_reply_to on public.rt_messages(reply_to);
+create table if not exists public.rt_days (
+  room_id uuid not null references public.rt_rooms(id),
+  day date not null,
+  revision bigint not null default 0,
+  archived_at timestamptz,
+  archived_revision bigint,
+  summary text,
+  summary_revision bigint,
+  primary key(room_id,day)
+);
+create table if not exists public.rt_todos (
+  id uuid primary key,
+  owner_id uuid not null references public.rt_members(user_id),
+  day date not null check(day between date '1900-01-01' and date '2200-12-31'),
+  body text not null check(char_length(btrim(body)) between 1 and 300),
+  done boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create index if not exists rt_todos_owner on public.rt_todos(owner_id,day);
+create table if not exists public.rt_events (
+  id uuid primary key,
+  author_id uuid not null references public.rt_members(user_id),
+  day date not null check(day between date '1900-01-01' and date '2200-12-31'),
+  local_time text check(local_time is null or local_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'),
+  title text not null check(char_length(btrim(title)) between 1 and 200),
+  detail text not null default '' check(char_length(detail)<=1000)
+);
+
+alter table public.rt_workspace enable row level security;
+alter table public.rt_members enable row level security;
+alter table public.rt_signals enable row level security;
+alter table public.rt_invites enable row level security;
+alter table public.rt_rooms enable row level security;
+alter table public.rt_messages enable row level security;
+alter table public.rt_days enable row level security;
+alter table public.rt_todos enable row level security;
+alter table public.rt_events enable row level security;
+revoke all on public.rt_workspace,public.rt_members,public.rt_signals,public.rt_invites,
+  public.rt_rooms,public.rt_messages,public.rt_days,public.rt_todos,public.rt_events from anon,authenticated;
+
+create or replace function public.rt_is_member() returns boolean
+language sql stable security definer set search_path='' as $$
+  select exists(select 1 from public.rt_members where user_id=(select auth.uid()));
+$$;
+create or replace function public.rt_can_room(p_room uuid) returns boolean
+language sql stable security definer set search_path='' as $$
+  select public.rt_is_member() and exists(select 1 from public.rt_rooms r where r.id=p_room
+    and r.status='active' and (r.kind='group' or auth.uid() in (r.user_a,r.user_b)));
+$$;
+create or replace function public.rt_bump(p_users uuid[]) returns void
+language sql security definer set search_path='' as $$
+  update public.rt_signals set revision=revision+1 where user_id=any(p_users);
+$$;
+revoke all on function public.rt_is_member(),public.rt_can_room(uuid),public.rt_bump(uuid[]) from public,anon,authenticated;
+grant execute on function public.rt_is_member() to authenticated;
+grant select on public.rt_signals to authenticated;
+drop policy if exists rt_own_signal on public.rt_signals;
+create policy rt_own_signal on public.rt_signals for select to authenticated
+  using (user_id=(select auth.uid()) and (select public.rt_is_member()));
+
+create or replace function public.rt_snapshot(
+  p_room uuid default '00000000-0000-4000-8000-000000000001', p_day date default current_date
+) returns jsonb language plpgsql security definer set search_path='' as $$
+begin
+  if not public.rt_is_member() then raise exception 'RT_NOT_MEMBER' using errcode='42501'; end if;
+  if not public.rt_can_room(p_room) then raise exception '이 대화방에 접근할 수 없어요.' using errcode='42501'; end if;
+  return jsonb_build_object(
+    'version',1,'revision',(select revision from public.rt_signals where user_id=auth.uid()),
+    'self',auth.uid(),'roomId',p_room,'day',p_day,
+    'members',(select coalesce(jsonb_agg(jsonb_build_object('id',user_id,'name',name) order by joined_at,user_id),'[]') from public.rt_members),
+    'rooms',(select coalesce(jsonb_agg(jsonb_build_object('id',id,'kind',kind,'a',user_a,'b',user_b,'invitedBy',invited_by,'status',status) order by created_at,id),'[]') from public.rt_rooms where kind='group' or auth.uid() in (user_a,user_b)),
+    'messages',(select coalesce(jsonb_agg(jsonb_build_object(
+      'id',id,
+      'roomId',room_id,
+      'authorId',author_id,
+      'text',body,
+      'day',day,
+      'localTime',local_time,
+      'replyTo',reply_to,
+      'createdAt',created_at
+    ) order by created_at,id),'[]') from public.rt_messages where room_id=p_room and day=p_day),
+    'days',(select coalesce(jsonb_agg(jsonb_build_object('day',d.day,'revision',d.revision,'archivedAt',d.archived_at,'archivedRevision',d.archived_revision,'summary',d.summary,'summaryRevision',d.summary_revision,'count',(select count(*) from public.rt_messages m where m.room_id=d.room_id and m.day=d.day)) order by d.day desc),'[]') from public.rt_days d where d.room_id=p_room),
+    'todos',(select coalesce(jsonb_agg(jsonb_build_object('id',id,'day',day,'text',body,'done',done) order by created_at,id),'[]') from public.rt_todos where owner_id=auth.uid()),
+    'events',(select coalesce(jsonb_agg(jsonb_build_object('id',id,'authorId',author_id,'day',day,'time',coalesce(local_time,''),'title',title,'detail',detail) order by day,local_time nulls first,id),'[]') from public.rt_events),
+    'invites',(select coalesce(jsonb_agg(jsonb_build_object('code',code,'expiresAt',expires_at) order by expires_at),'[]') from public.rt_invites where created_by=auth.uid() and consumed_by is null and not revoked and expires_at>now()),
+    'reserved',(select count(*) from public.rt_invites where consumed_by is null and not revoked and expires_at>now())
+  );
+end;
+$$;
+
+create or replace function public.rt_join(p_code uuid,p_name text,p_day date default current_date)
+returns jsonb language plpgsql security definer set search_path='' as $$
+declare v_uid uuid:=auth.uid(); v_name text:=btrim(p_name); v_invite public.rt_invites%rowtype;
+begin
+  if v_uid is null then raise exception '먼저 로그인해 주세요.' using errcode='42501'; end if;
+  perform 1 from public.rt_workspace where id=1 for update;
+  if public.rt_is_member() then return public.rt_snapshot('00000000-0000-4000-8000-000000000001',p_day); end if;
+  if v_name is null or char_length(v_name) not between 1 and 20 then raise exception '이름은 1~20자로 입력해 주세요.'; end if;
+  select * into v_invite from public.rt_invites where code=p_code;
+  if not found or v_invite.revoked or v_invite.consumed_by is not null or v_invite.expires_at<=now() then raise exception '초대 코드가 없거나 만료됐어요. 새 초대를 받아주세요.'; end if;
+  if (select count(*) from public.rt_members)>=6 then raise exception '여섯 명이 모두 참여했어요.'; end if;
+  insert into public.rt_members(user_id,name) values (v_uid,v_name);
+  insert into public.rt_signals(user_id) values(v_uid);
+  update public.rt_invites set consumed_by=v_uid where code=p_code;
+  perform public.rt_bump(array(select user_id from public.rt_members));
+  return public.rt_snapshot('00000000-0000-4000-8000-000000000001',p_day);
+end;
+$$;
+
+create or replace function public.rt_apply(p_action text,p_data jsonb,
+  p_room uuid default '00000000-0000-4000-8000-000000000001',p_day date default current_date)
+returns jsonb language plpgsql security definer set search_path='' as $$
+declare
+  v_uid uuid:=auth.uid(); v_id uuid; v_room uuid; v_day date; v_text text;
+  v_reply_to uuid;
+  v_target uuid; v_room_row public.rt_rooms%rowtype; v_message public.rt_messages%rowtype;
+  v_users uuid[]; v_result jsonb:='{}'; v_revision bigint;
+begin
+  if not public.rt_is_member() then raise exception 'RT_NOT_MEMBER' using errcode='42501'; end if;
+  -- 동시 전송과 초대 정원 확인을 한 번의 안전한 저장 작업으로 처리합니다.
+  perform 1 from public.rt_workspace where id=1 for update;
+  v_users:=array(select user_id from public.rt_members);
+  if p_action='message.add' then
+    v_id:=(p_data->>'id')::uuid;
+    v_room:=(p_data->>'roomId')::uuid;
+    v_day:=(p_data->>'day')::date;
+    v_text:=btrim(p_data->>'text');
+
+    -- storage.js가 보내는 replyTo를 nullable uuid로 받습니다.
+    v_reply_to:=nullif(p_data->>'replyTo','')::uuid;
+
+    if not public.rt_can_room(v_room) then
+      raise exception '초대를 수락한 대화방에서만 보낼 수 있어요.' using errcode='42501';
+    end if;
+
+    -- 답장은 같은 대화방·같은 날짜의 기존 메시지만 대상으로 허용합니다.
+    if v_reply_to is not null then
+      if v_reply_to=v_id then
+        raise exception '자기 자신에게 답장할 수 없어요.';
+      end if;
+
+      if not exists(
+        select 1
+        from public.rt_messages
+        where id=v_reply_to
+          and room_id=v_room
+          and day=v_day
       ) then
         raise exception '답장할 원본 메시지를 찾을 수 없어요. 화면을 새로 확인해 주세요.';
       end if;
