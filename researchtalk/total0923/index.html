@@ -2676,6 +2676,237 @@ body,.app-frame,.auth-screen,.chat-scroll{
   body[data-workspace-theme="hwp"] #workspace #page-chat{width:356px!important;}
   body[data-workspace-theme="hwp"] .hwp-document-page{width:min(1120px,calc(100% - 18px))!important;}
 }
+
+</style>
+
+<style id="hwp-v6-layout-style">
+/* =========================================================
+   한글 모드 v6
+   - 문서 작성 화면을 최대한 크게 유지
+   - 메모는 우측 사이드바에서 제거하고 문서 오른쪽 가장자리에 겹쳐 표시
+   - 우측에는 작은 달력 + 실제 대화만 배치
+   - 대화 글꼴/크기를 기존 Excel 모드와 동일한 맑은 고딕 계열로 확대
+   ========================================================= */
+@media(min-width:1100px){
+  /* 우측 보조열은 달력+대화 전용. 메모가 빠진 만큼 대화를 넓고 크게 표시 */
+  body[data-workspace-theme="hwp"] .hwp-document-stage{
+    inset:0 398px 23px 0!important;
+    padding:38px 24px 58px 30px!important;
+    gap:30px!important;
+  }
+
+  body[data-workspace-theme="hwp"] .hwp-document-stage:before{
+    width:calc(100% + 54px)!important;
+    margin:-38px -24px -10px -30px!important;
+  }
+
+  /* 페이지가 작업영역을 거의 가득 채우도록 */
+  body[data-workspace-theme="hwp"] .hwp-document-page{
+    width:min(1180px,calc(100% - 18px))!important;
+    min-height:1210px!important;
+    padding:72px 86px 86px!important;
+  }
+
+  /* 메모는 한글 문서 쪽에 떠 있는 실제 검토 메모처럼 보이게 함 */
+  body[data-workspace-theme="hwp"] .hwp-review-panel{
+    display:flex!important;
+    position:absolute!important;
+    top:70px!important;
+    right:410px!important;
+    left:auto!important;
+    width:236px!important;
+    height:188px!important;
+    flex-direction:column!important;
+    overflow:visible!important;
+    border:1px solid #9daf72!important;
+    background:#eff7df!important;
+    box-shadow:0 2px 6px rgba(36,43,48,.16)!important;
+    z-index:14!important;
+  }
+
+  /* 문서 본문과 메모가 연결된 것 같은 선 */
+  body[data-workspace-theme="hwp"] .hwp-review-panel:before{
+    content:"";
+    position:absolute;
+    left:-86px;
+    top:44px;
+    width:86px;
+    border-top:1px dotted #ba6f6f;
+    transform:rotate(-4deg);
+    transform-origin:right center;
+    pointer-events:none;
+  }
+
+  body[data-workspace-theme="hwp"] .hwp-review-head{
+    height:27px!important;
+    min-height:27px!important;
+    padding:0 7px!important;
+    background:#dff1b9!important;
+    border-bottom:1px solid #a9bb7f!important;
+    color:#39452f!important;
+    font:600 10px/1 "Malgun Gothic","맑은 고딕",Arial,sans-serif!important;
+  }
+  body[data-workspace-theme="hwp"] .hwp-review-head strong:before{content:"▤ ";color:#627e3d!important;}
+  body[data-workspace-theme="hwp"] .hwp-review-head span{font-size:9px!important;color:#66725f!important;}
+  body[data-workspace-theme="hwp"] .hwp-review-list{padding:5px!important;background:#f7faef!important;}
+  body[data-workspace-theme="hwp"] .hwp-review-note{
+    padding:5px 6px!important;margin:0 0 5px!important;
+    font:9px/1.45 "Malgun Gothic","맑은 고딕",Arial,sans-serif!important;
+  }
+  body[data-workspace-theme="hwp"] .hwp-review-form{padding:4px!important;background:#eef4df!important;}
+  body[data-workspace-theme="hwp"] .hwp-review-form input{
+    height:26px!important;min-height:26px!important;font:10px "Malgun Gothic","맑은 고딕",Arial,sans-serif!important;
+  }
+  body[data-workspace-theme="hwp"] .hwp-review-form button{
+    height:26px!important;min-height:26px!important;font:10px "Malgun Gothic","맑은 고딕",Arial,sans-serif!important;
+  }
+
+  /* 오른쪽 달력 */
+  body[data-workspace-theme="hwp"] #workspace #page-home,
+  body[data-workspace-theme="hwp"] #workspace #page-chat{
+    right:7px!important;
+    width:378px!important;
+  }
+
+  body[data-workspace-theme="hwp"] #workspace #page-home{
+    top:7px!important;
+    height:250px!important;
+  }
+
+  /* 대화 영역을 메모가 차지하던 공간만큼 위로 끌어올려 크게 사용 */
+  body[data-workspace-theme="hwp"] #workspace #page-chat{
+    top:264px!important;
+    bottom:29px!important;
+    min-height:310px!important;
+  }
+
+  /* 대화창 전체 글꼴을 기존 Excel UI와 동일하게 */
+  body[data-workspace-theme="hwp"] #page-chat,
+  body[data-workspace-theme="hwp"] #page-chat button,
+  body[data-workspace-theme="hwp"] #page-chat input,
+  body[data-workspace-theme="hwp"] #page-chat textarea{
+    font-family:"Malgun Gothic","맑은 고딕",Arial,sans-serif!important;
+  }
+
+  body[data-workspace-theme="hwp"] #page-chat .hwp-memo-bar{
+    height:28px!important;
+    min-height:28px!important;
+    padding:0 9px!important;
+    font-size:11px!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .hwp-memo-bar span:first-child{
+    font-size:11px!important;
+    font-weight:700!important;
+    color:#38464f!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .hwp-memo-bar span:first-child:before{content:none!important;}
+  body[data-workspace-theme="hwp"] #page-chat .hwp-memo-bar span:last-child{
+    font-size:10px!important;
+    color:#7a858c!important;
+  }
+
+  body[data-workspace-theme="hwp"] #page-chat .chat-top{
+    padding:6px 8px 5px!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .chat-top h1{
+    font-size:11px!important;
+    color:#3f4b53!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .soft-button{
+    min-height:25px!important;
+    font-size:10px!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .room-list{
+    margin:4px 0 0!important;
+    gap:4px!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .room-chip{
+    min-height:26px!important;
+    height:26px!important;
+    padding:2px 8px!important;
+    font-size:11px!important;
+  }
+
+  body[data-workspace-theme="hwp"] #page-chat .chat-context{
+    padding:6px 8px!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .chat-context strong{
+    font-size:11px!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .chat-context .text-button{
+    min-height:24px!important;
+    font-size:10px!important;
+  }
+
+  body[data-workspace-theme="hwp"] #page-chat .chat-scroll{
+    padding:9px!important;
+    background:#fafafa!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .chat-messages{
+    gap:8px!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .message,
+  body[data-workspace-theme="hwp"] #page-chat .message.mine{
+    padding:7px 8px!important;
+    border:1px solid #dcdcdc!important;
+    background:#fff!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .message.mine{
+    background:#eef6ef!important;
+    border-color:#d4e4d7!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .message-main{
+    gap:4px 6px!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .message-author,
+  body[data-workspace-theme="hwp"] #page-chat .message.mine .message-author{
+    font-size:11px!important;
+    font-weight:700!important;
+    color:#107c41!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .message-bubble,
+  body[data-workspace-theme="hwp"] #page-chat .mine .message-bubble{
+    font-size:12px!important;
+    line-height:1.55!important;
+    color:#252525!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .message-meta,
+  body[data-workspace-theme="hwp"] #page-chat .mine .message-meta{
+    font-size:9px!important;
+    color:#8b9398!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .message-delete{
+    font-size:9px!important;
+  }
+
+  body[data-workspace-theme="hwp"] #page-chat .composer-wrap{
+    padding:7px 8px!important;
+    background:#fafafa!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .composer textarea{
+    min-height:36px!important;
+    height:36px!important;
+    padding:7px 8px!important;
+    font-size:12px!important;
+    line-height:1.5!important;
+  }
+  body[data-workspace-theme="hwp"] #page-chat .send-button{
+    min-width:36px!important;
+    width:36px!important;
+    min-height:36px!important;
+    height:36px!important;
+    background:#e9efeb!important;
+    color:#107c41!important;
+  }
+}
+
+@media(min-width:1500px){
+  body[data-workspace-theme="hwp"] .hwp-document-stage{right:414px!important;}
+  body[data-workspace-theme="hwp"] #workspace #page-home,
+  body[data-workspace-theme="hwp"] #workspace #page-chat{width:394px!important;}
+  body[data-workspace-theme="hwp"] .hwp-review-panel{right:426px!important;}
+  body[data-workspace-theme="hwp"] .hwp-document-page{width:min(1240px,calc(100% - 18px))!important;}
+}
 </style>
 
 </head>
@@ -3287,7 +3518,7 @@ body,.app-frame,.auth-screen,.chat-scroll{
 
     <!-- J: 메신저 -->
     <section id="page-chat" class="page chat-page" aria-label="대화" hidden>
-      <div class="hwp-memo-bar" aria-hidden="true"><span>메모</span><span>문서 검토 의견</span></div>
+      <div class="hwp-memo-bar" aria-hidden="true"><span>대화</span><span>연구사업단</span></div>
       <div class="xl-letters" aria-hidden="true"><span>J</span></div>
 
       <div class="chat-top">
