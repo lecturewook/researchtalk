@@ -3727,15 +3727,35 @@ body,.app-frame,.auth-screen,.chat-scroll{
     const scroller=$('chat-scroll');
 
 
-    /* 읽지 않은 메시지가 있으면 브라우저 탭 아이콘 자체를 빨간 점으로 교체 */
+    /*
+      브라우저 탭 파비콘
+      - Excel 화면: 기존 Excel 계열 favicon
+      - 한글 화면: 파란색 '한' favicon
+      - 읽지 않은 메시지: 화면 종류와 관계없이 빨간 점이 우선 표시
+    */
     const browserIcon=document.querySelector('link[rel~="icon"]');
-    const normalBrowserIcon=browserIcon?.getAttribute('href')||'./icons/favicon-32.jpg?v=20260929';
+    const excelBrowserIcon=browserIcon?.getAttribute('href')||'./icons/favicon-32.jpg?v=20260929';
+    const hwpBrowserIcon='./icons/favicon-32-hangul.png?v=20260929';
     const unreadBrowserIcon='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%229%22 fill=%22%23d93025%22/%3E%3C/svg%3E';
+    let faviconHasUnread=false;
+
+    function refreshBrowserFavicon(){
+      if(!browserIcon)return;
+      const theme=document.body?.dataset.workspaceTheme||'excel';
+      const normalIcon=theme==='hwp'?hwpBrowserIcon:excelBrowserIcon;
+      browserIcon.setAttribute('href',faviconHasUnread?unreadBrowserIcon:normalIcon);
+      browserIcon.setAttribute(
+        'type',
+        faviconHasUnread ? 'image/svg+xml' : (theme==='hwp' ? 'image/png' : 'image/jpeg')
+      );
+    }
+
+    /* 테마 전환 스크립트에서도 현재 읽음 상태를 유지한 채 아이콘만 갱신할 수 있게 공개 */
+    window.RTRefreshBrowserFavicon=refreshBrowserFavicon;
 
     function updateUnreadIndicators(hasUnread){
-      if(browserIcon){
-        browserIcon.setAttribute('href',hasUnread?unreadBrowserIcon:normalBrowserIcon);
-      }
+      faviconHasUnread=!!hasUnread;
+      refreshBrowserFavicon();
 
       const chatTab=document.querySelector('.bottom-nav [data-tab="chat"]');
       const dot=chatTab?.querySelector('.unread-dot');
@@ -4190,6 +4210,12 @@ body,.app-frame,.auth-screen,.chat-scroll{
     document.title=theme==='hwp'
       ?'연구사업단_과제관리_총괄현황.hwp · researchtalk'
       :'연구사업단_과제관리_월별현황.xlsx · researchtalk';
+
+    /* 탭 아이콘도 현재 작업 화면에 맞춰 즉시 전환한다.
+       단, 읽지 않은 메시지가 있으면 빨간 점이 계속 우선 표시된다. */
+    if(typeof window.RTRefreshBrowserFavicon==='function'){
+      window.RTRefreshBrowserFavicon();
+    }
 
     if(save){
       try{localStorage.setItem(KEY,theme)}catch(_){}
