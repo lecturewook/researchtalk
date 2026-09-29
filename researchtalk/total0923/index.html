@@ -3054,6 +3054,71 @@ body,.app-frame,.auth-screen,.chat-scroll{
 }
 </style>
 
+
+
+<style id="daily-work-traces-style">
+/* =========================================================
+   v15: 매일 달라지는 '업무 흔적' 장식
+   - 날짜를 seed로 사용해 같은 날에는 새로고침해도 같은 위치 유지
+   - 다음 날에는 한글 형광펜/Excel 셀 채우기가 자동으로 다른 위치로 변경
+   - 실제 데이터에는 영향을 주지 않는 시각 효과만 적용
+   ========================================================= */
+
+/* 한글 문서의 형광펜 표시 */
+.hwp-document-page .daily-marker{
+  position:relative;
+  z-index:0;
+  padding:0 .04em;
+  margin:0 -.01em;
+  -webkit-box-decoration-break:clone;
+  box-decoration-break:clone;
+  border-radius:1px;
+}
+.hwp-document-page .daily-marker::before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  left:-.05em;
+  right:-.05em;
+  top:54%;
+  bottom:-.06em;
+  opacity:.72;
+  transform:rotate(var(--marker-tilt,-.35deg));
+  transform-origin:center;
+  border-radius:2px 4px 2px 3px;
+  filter:saturate(.95);
+  pointer-events:none;
+}
+.hwp-document-page .daily-marker.marker-yellow::before{background:rgba(255,231,92,.76);}
+.hwp-document-page .daily-marker.marker-green::before{background:rgba(174,231,151,.67);}
+.hwp-document-page .daily-marker.marker-pink::before{background:rgba(255,181,196,.58);}
+.hwp-document-page .daily-marker.marker-blue::before{background:rgba(163,211,244,.58);}
+
+/* 한글 모드에서만 표시. Excel 화면에서는 DOM에 남아 있어도 보이지 않음 */
+body:not([data-workspace-theme="hwp"]) .hwp-document-page .daily-marker::before{display:none;}
+
+/* Excel의 매일 달라지는 셀/행 채우기 */
+.xl-table td.daily-work-fill{
+  transition:background-color .12s ease;
+}
+.xl-table td.daily-fill-yellow{background:#fff2cc!important;}
+.xl-table td.daily-fill-green{background:#e2f0d9!important;}
+.xl-table td.daily-fill-blue{background:#ddebf7!important;}
+.xl-table td.daily-fill-rose{background:#fce4d6!important;}
+.xl-table td.daily-fill-gray{background:#e7e6e6!important;}
+
+/* 가끔 한 셀에 '방금 편집한 셀' 같은 아주 얇은 표시 */
+.xl-table td.daily-work-edge{
+  box-shadow:inset 3px 0 0 rgba(16,124,65,.38);
+}
+
+/* 현재 선택 셀은 항상 Excel 기본 선택 테두리가 우선 */
+.xl-table td.daily-work-fill[tabindex="0"]{
+  outline:2px solid #107c41!important;
+  outline-offset:-2px!important;
+}
+</style>
+
 </head>
 
 <body>
@@ -4719,6 +4784,253 @@ body,.app-frame,.auth-screen,.chat-scroll{
     document.addEventListener('DOMContentLoaded',init,{once:true});
   }else{
     init();
+  }
+})();
+</script>
+
+
+
+
+<script id="daily-work-traces-script">
+(function(){
+  'use strict';
+
+  /* 로컬 날짜 기준 YYYY-MM-DD */
+  function dayKey(){
+    const d=new Date();
+    const y=d.getFullYear();
+    const m=String(d.getMonth()+1).padStart(2,'0');
+    const day=String(d.getDate()).padStart(2,'0');
+    return y+'-'+m+'-'+day;
+  }
+
+  /* 문자열을 날짜별 seed로 변환 */
+  function hashSeed(value){
+    let h=2166136261>>>0;
+    for(let i=0;i<value.length;i++){
+      h^=value.charCodeAt(i);
+      h=Math.imul(h,16777619);
+    }
+    return h>>>0;
+  }
+
+  /* 같은 seed면 항상 같은 순서를 내는 작은 PRNG */
+  function rngFrom(seedText){
+    let a=hashSeed(seedText)||0x12345678;
+    return function(){
+      a|=0;
+      a=(a+0x6D2B79F5)|0;
+      let t=a;
+      t=Math.imul(t^(t>>>15),t|1);
+      t^=t+Math.imul(t^(t>>>7),t|61);
+      return ((t^(t>>>14))>>>0)/4294967296;
+    };
+  }
+
+  function shuffle(items,rng){
+    const arr=items.slice();
+    for(let i=arr.length-1;i>0;i--){
+      const j=Math.floor(rng()*(i+1));
+      [arr[i],arr[j]]=[arr[j],arr[i]];
+    }
+    return arr;
+  }
+
+  function unwrapDailyMarkers(){
+    document.querySelectorAll('.hwp-document-page .daily-marker').forEach(mark=>{
+      const parent=mark.parentNode;
+      if(!parent)return;
+      mark.replaceWith(document.createTextNode(mark.textContent||''));
+      parent.normalize();
+    });
+  }
+
+  function longestTextNode(el){
+    let best=null;
+    for(const node of el.childNodes){
+      if(node.nodeType===Node.TEXT_NODE && node.nodeValue && node.nodeValue.trim().length){
+        if(!best || node.nodeValue.length>best.nodeValue.length)best=node;
+      }
+    }
+    return best;
+  }
+
+  function markerBounds(text,rng){
+    const cleanLength=text.trim().length;
+    if(cleanLength<24)return null;
+
+    const wanted=Math.min(
+      Math.max(18,Math.floor(24+rng()*34)),
+      Math.max(18,text.length-4)
+    );
+    const maxStart=Math.max(1,text.length-wanted-1);
+    let start=Math.floor(rng()*maxStart);
+
+    /* 문장 한가운데서 자연스럽게 시작하도록 공백/문장부호 근처로 보정 */
+    const left=text.lastIndexOf(' ',start);
+    if(left>=0 && start-left<10)start=left+1;
+    while(start<text.length && /\s/.test(text[start]))start++;
+
+    let end=Math.min(text.length,start+wanted);
+    const nextSpace=text.indexOf(' ',end);
+    if(nextSpace>0 && nextSpace-end<10)end=nextSpace;
+    while(end>start && /\s/.test(text[end-1]))end--;
+
+    if(end-start<12)return null;
+    return [start,end];
+  }
+
+  function wrapMarker(node,start,end,color,tilt){
+    if(!node||!node.parentNode||start<0||end<=start)return;
+    const value=node.nodeValue;
+    const frag=document.createDocumentFragment();
+    if(start>0)frag.append(document.createTextNode(value.slice(0,start)));
+
+    const mark=document.createElement('span');
+    mark.className='daily-marker '+color;
+    mark.style.setProperty('--marker-tilt',tilt+'deg');
+    mark.textContent=value.slice(start,end);
+    mark.title='오늘의 작업 흔적';
+    frag.append(mark);
+
+    if(end<value.length)frag.append(document.createTextNode(value.slice(end)));
+    node.parentNode.replaceChild(frag,node);
+  }
+
+  function applyHwpTraces(key){
+    unwrapDailyMarkers();
+    const pages=[...document.querySelectorAll('.hwp-document-page')];
+    if(!pages.length)return;
+
+    const rng=rngFrom('hwp|'+key);
+    const colors=['marker-yellow','marker-yellow','marker-yellow','marker-green','marker-pink','marker-blue'];
+    const chosen=[];
+
+    /* 각 페이지에 최소 한 번씩은 형광펜 흔적이 보이게 함 */
+    pages.forEach((page,pageIndex)=>{
+      const candidates=[...page.querySelectorAll('.hwp-report-paragraph,.hwp-report-list li')]
+        .filter(el=>(el.textContent||'').trim().length>=28);
+      if(!candidates.length)return;
+      const mixed=shuffle(candidates,rng);
+      chosen.push({el:mixed[0],pageIndex});
+    });
+
+    /* 하루에 1~2개 정도 추가 표시 */
+    const all=[...document.querySelectorAll('.hwp-report-paragraph,.hwp-report-list li')]
+      .filter(el=>(el.textContent||'').trim().length>=28 && !chosen.some(x=>x.el===el));
+    const extras=shuffle(all,rng).slice(0,1+Math.floor(rng()*2));
+    extras.forEach(el=>chosen.push({el,pageIndex:-1}));
+
+    chosen.forEach((item,index)=>{
+      const node=longestTextNode(item.el);
+      if(!node)return;
+      const bounds=markerBounds(node.nodeValue,rng);
+      if(!bounds)return;
+      const color=colors[Math.floor(rng()*colors.length)];
+      const tilt=(-.8+rng()*1.6).toFixed(2);
+      wrapMarker(node,bounds[0],bounds[1],color,tilt);
+    });
+  }
+
+  function clearExcelTraces(){
+    document.querySelectorAll('#xl-body td.daily-work-fill,#xl-body td.daily-work-edge').forEach(td=>{
+      td.classList.remove(
+        'daily-work-fill','daily-work-edge',
+        'daily-fill-yellow','daily-fill-green','daily-fill-blue','daily-fill-rose','daily-fill-gray'
+      );
+    });
+  }
+
+  function applyExcelTraces(key){
+    const body=document.getElementById('xl-body');
+    if(!body)return;
+    clearExcelTraces();
+
+    /* tbody 첫 줄은 화면용 열 제목이므로 제외하고 실제 값이 있는 행만 사용 */
+    const rows=[...body.querySelectorAll('tr')].slice(1).filter(row=>
+      [...row.querySelectorAll('td')].some(td=>(td.textContent||'').trim())
+    );
+    if(!rows.length)return;
+
+    const rng=rngFrom('excel|'+key);
+    const palette=['daily-fill-yellow','daily-fill-green','daily-fill-blue','daily-fill-rose','daily-fill-gray'];
+    const occupied=new Set();
+
+    function paint(rowIndex,colIndex,rowSpan,colSpan,color){
+      for(let r=0;r<rowSpan;r++){
+        const row=rows[rowIndex+r];
+        if(!row)continue;
+        const cells=[...row.querySelectorAll('td')];
+        for(let c=0;c<colSpan;c++){
+          const cell=cells[colIndex+c];
+          if(!cell)continue;
+          const id=(rowIndex+r)+'|'+(colIndex+c);
+          if(occupied.has(id))continue;
+          occupied.add(id);
+          cell.classList.add('daily-work-fill',color);
+        }
+      }
+    }
+
+    /* 1) 가로로 칠해 둔 작은 업무 범위 */
+    let r=Math.floor(rng()*rows.length);
+    let c=Math.floor(rng()*4);
+    paint(r,c,1,3+Math.floor(rng()*3),'daily-fill-yellow');
+
+    /* 2) 2x2 또는 2x3 정도의 검토 범위 */
+    r=Math.floor(rng()*Math.max(1,rows.length-1));
+    c=1+Math.floor(rng()*4);
+    paint(r,c,Math.min(2,rows.length-r),2+Math.floor(rng()*2),'daily-fill-green');
+
+    /* 3) 단일/두 셀 강조 */
+    r=Math.floor(rng()*rows.length);
+    c=Math.floor(rng()*7);
+    paint(r,c,1,1+Math.floor(rng()*2),palette[2+Math.floor(rng()*3)]);
+
+    /* 4) 가끔 한 행의 일부를 파란 계열로 표시 */
+    r=Math.floor(rng()*rows.length);
+    c=Math.floor(rng()*3);
+    paint(r,c,1,2+Math.floor(rng()*3),'daily-fill-blue');
+
+    /* 5) 오늘 마지막으로 만진 셀 같은 얇은 편집 흔적 */
+    const edgeRow=rows[Math.floor(rng()*rows.length)];
+    const edgeCells=edgeRow?[...edgeRow.querySelectorAll('td')]:[];
+    if(edgeCells.length){
+      const edge=edgeCells[Math.floor(rng()*edgeCells.length)];
+      edge?.classList.add('daily-work-edge');
+    }
+  }
+
+  function initDailyWorkTraces(){
+    const body=document.getElementById('xl-body');
+    let current=dayKey();
+
+    applyHwpTraces(current);
+    applyExcelTraces(current);
+
+    /* 검색/상태 변경으로 Excel 표가 다시 그려져도 오늘의 색 배치를 다시 적용 */
+    if(body){
+      let raf=0;
+      new MutationObserver(()=>{
+        cancelAnimationFrame(raf);
+        raf=requestAnimationFrame(()=>applyExcelTraces(dayKey()));
+      }).observe(body,{childList:true,subtree:true});
+    }
+
+    /* 앱을 자정 넘겨 계속 켜 둔 경우에도 다음 날 자동으로 새 배치 */
+    setInterval(()=>{
+      const next=dayKey();
+      if(next===current)return;
+      current=next;
+      applyHwpTraces(current);
+      applyExcelTraces(current);
+    },60000);
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',initDailyWorkTraces,{once:true});
+  }else{
+    initDailyWorkTraces();
   }
 })();
 </script>
