@@ -2927,13 +2927,20 @@ body,.app-frame,.auth-screen,.chat-scroll{
 
 
 <style id="notification-sound-style">
-/* 메시지 알림음 토글: Excel/한글 제목줄에 자연스럽게 붙는 작은 버튼 */
-.notification-sound-toggle{
+/* v14: 메시지 알림음 ON/OFF + 효과음 선택 + 음량 조절 */
+.notification-sound-control{
   display:none;
+  position:relative;
+  align-items:center;
+  gap:3px;
+  flex-shrink:0;
+  font-family:"Malgun Gothic","맑은 고딕",Arial,sans-serif;
+}
+.notification-sound-toggle,
+.notification-sound-settings{
+  display:inline-flex;
   align-items:center;
   justify-content:center;
-  width:29px;
-  min-width:29px;
   height:25px;
   min-height:25px;
   padding:0;
@@ -2941,23 +2948,109 @@ body,.app-frame,.auth-screen,.chat-scroll{
   border-radius:4px;
   background:rgba(255,255,255,.10);
   color:inherit;
-  font-size:14px;
   line-height:1;
   cursor:pointer;
-  flex-shrink:0;
 }
-.notification-sound-toggle:hover{background:rgba(255,255,255,.18);}
+.notification-sound-toggle{
+  width:29px;
+  min-width:29px;
+  font-size:14px;
+}
+.notification-sound-settings{
+  width:22px;
+  min-width:22px;
+  font-size:10px;
+}
+.notification-sound-toggle:hover,
+.notification-sound-settings:hover{background:rgba(255,255,255,.18);}
 .notification-sound-toggle[aria-pressed="false"]{opacity:.62;}
 .notification-sound-toggle .sound-icon{transform:translateY(-.5px);}
 
+.notification-sound-panel{
+  position:absolute;
+  top:31px;
+  right:0;
+  z-index:30000;
+  width:260px;
+  padding:12px;
+  border:1px solid #cfd5da;
+  border-radius:6px;
+  background:#fff;
+  color:#252525;
+  box-shadow:0 8px 24px rgba(0,0,0,.18);
+  font-size:12px;
+  line-height:1.45;
+}
+.notification-sound-panel[hidden]{display:none!important;}
+.notification-sound-panel strong{
+  display:block;
+  margin-bottom:9px;
+  font-size:12px;
+}
+.notification-sound-row{
+  display:grid;
+  grid-template-columns:58px minmax(0,1fr);
+  align-items:center;
+  gap:8px;
+  margin-top:9px;
+}
+.notification-sound-row label{color:#555;white-space:nowrap;}
+.notification-sound-row select{
+  width:100%;
+  height:29px;
+  border:1px solid #bfc5ca;
+  border-radius:3px;
+  background:#fff;
+  color:#222;
+  padding:0 7px;
+  font:12px "Malgun Gothic","맑은 고딕",Arial,sans-serif;
+}
+.notification-volume-wrap{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 44px;
+  align-items:center;
+  gap:7px;
+}
+.notification-volume-wrap input[type="range"]{
+  width:100%;
+  accent-color:#107c41;
+  cursor:pointer;
+}
+.notification-volume-wrap output{
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+  color:#444;
+  font-size:11px;
+}
+.notification-preview-button{
+  width:100%;
+  min-height:29px;
+  margin-top:11px;
+  border:1px solid #bfc5ca;
+  border-radius:3px;
+  background:#f7f8f8;
+  color:#333;
+  font:12px "Malgun Gothic","맑은 고딕",Arial,sans-serif;
+  cursor:pointer;
+}
+.notification-preview-button:hover{background:#eef1f2;}
+.notification-sound-note{
+  margin:7px 0 0;
+  color:#858585;
+  font-size:10px;
+}
+
 @media(min-width:1100px){
-  .notification-sound-toggle{display:inline-flex;}
-  body[data-workspace-theme="hwp"] .notification-sound-toggle{
+  .notification-sound-control{display:inline-flex;}
+  body[data-workspace-theme="hwp"] .notification-sound-toggle,
+  body[data-workspace-theme="hwp"] .notification-sound-settings{
     border-color:#c7d3dc;
     background:#f8fbfd;
     color:#536a7a;
   }
-  body[data-workspace-theme="hwp"] .notification-sound-toggle:hover{background:#eef5fa;}
+  body[data-workspace-theme="hwp"] .notification-sound-toggle:hover,
+  body[data-workspace-theme="hwp"] .notification-sound-settings:hover{background:#eef5fa;}
+  body[data-workspace-theme="hwp"] .notification-volume-wrap input[type="range"]{accent-color:#1f7fb6;}
 }
 </style>
 
@@ -3014,11 +3107,45 @@ body,.app-frame,.auth-screen,.chat-scroll{
       <button type="button" data-workspace-theme="hwp" aria-pressed="false">한글</button>
     </div>
 
-    <button id="notification-sound-toggle" class="notification-sound-toggle"
-            type="button" aria-pressed="true"
-            aria-label="메시지 알림음 끄기" title="메시지 알림음 켜기/끄기">
-      <span class="sound-icon" aria-hidden="true">🔊</span>
-    </button>
+    <div class="notification-sound-control" id="notification-sound-control">
+      <button id="notification-sound-toggle" class="notification-sound-toggle"
+              type="button" aria-pressed="true"
+              aria-label="메시지 알림음 끄기" title="메시지 알림음 켜기/끄기">
+        <span class="sound-icon" aria-hidden="true">🔊</span>
+      </button>
+      <button id="notification-sound-settings" class="notification-sound-settings"
+              type="button" aria-expanded="false"
+              aria-controls="notification-sound-panel"
+              aria-label="알림음 설정" title="알림음 종류와 음량">
+        ▾
+      </button>
+      <div id="notification-sound-panel" class="notification-sound-panel" hidden>
+        <strong>메시지 알림음</strong>
+        <div class="notification-sound-row">
+          <label for="notification-sound-type">효과음</label>
+          <select id="notification-sound-type">
+            <option value="shutter">찰칵</option>
+            <option value="chime">딩</option>
+            <option value="pop">톡</option>
+            <option value="ping">핑</option>
+            <option value="dingdong">딩동</option>
+          </select>
+        </div>
+        <div class="notification-sound-row">
+          <label for="notification-sound-volume">음량</label>
+          <div class="notification-volume-wrap">
+            <input id="notification-sound-volume" type="range"
+                   min="25" max="200" step="5" value="125"
+                   aria-label="알림음 음량" />
+            <output id="notification-sound-volume-value" for="notification-sound-volume">125%</output>
+          </div>
+        </div>
+        <button id="notification-sound-preview" class="notification-preview-button" type="button">
+          ▶ 미리 듣기
+        </button>
+        <p class="notification-sound-note">음량은 25~200%까지 조절할 수 있어요.</p>
+      </div>
+    </div>
 
     <div class="xl-title-search" aria-hidden="true">
       <svg class="icon" viewBox="0 0 24 24">
@@ -3811,35 +3938,65 @@ body,.app-frame,.auth-screen,.chat-scroll{
     }
 
     /* -------------------------------------------------------
-       조용한 '찰칵' 메시지 알림음
-       - 기본값: 켜짐
-       - 제목줄의 🔊/🔇 버튼으로 언제든 끄고 켤 수 있음
-       - 별도 mp3 파일 없이 Web Audio API로 아주 짧게 합성
-       - 브라우저 정책상 사용자가 페이지를 한 번 클릭/키입력한 뒤부터 재생 가능
+       v14 메시지 알림음
+       - 🔊/🔇 버튼: 알림음 ON/OFF
+       - ▾ 버튼: 찰칵/딩/톡/핑/딩동 선택 + 25~200% 음량 조절
+       - 설정은 localStorage에 저장되어 새로고침 후에도 유지
+       - 별도 음원 파일 없이 Web Audio API로 합성
+       - 사용자가 페이지를 한 번 클릭/키입력한 뒤부터 자동 재생 가능
     ------------------------------------------------------- */
     const SOUND_KEY='researchtalk.notificationSound';
+    const SOUND_TYPE_KEY='researchtalk.notificationSoundType';
+    const SOUND_VOLUME_KEY='researchtalk.notificationSoundVolume';
+
+    const soundControl=$('notification-sound-control');
     const soundToggle=$('notification-sound-toggle');
+    const soundSettings=$('notification-sound-settings');
+    const soundPanel=$('notification-sound-panel');
+    const soundTypeSelect=$('notification-sound-type');
+    const soundVolumeInput=$('notification-sound-volume');
+    const soundVolumeValue=$('notification-sound-volume-value');
+    const soundPreview=$('notification-sound-preview');
+
+    const VALID_SOUND_TYPES=new Set(['shutter','chime','pop','ping','dingdong']);
     let soundEnabled=true;
+    let soundType='shutter';
+    let soundVolume=125;
     let audioContext=null;
+    let audioMaster=null;
+    let audioCompressor=null;
     let soundStateReady=false;
     let previousUnreadRooms=new Map();
     let previousLatestMessageId='';
 
     try{
       soundEnabled=localStorage.getItem(SOUND_KEY)!=='off';
+      const savedType=localStorage.getItem(SOUND_TYPE_KEY);
+      if(VALID_SOUND_TYPES.has(savedType))soundType=savedType;
+      const savedVolume=Number(localStorage.getItem(SOUND_VOLUME_KEY));
+      if(Number.isFinite(savedVolume)&&savedVolume>=25&&savedVolume<=200){
+        soundVolume=Math.round(savedVolume/5)*5;
+      }
     }catch(_){
       soundEnabled=true;
+      soundType='shutter';
+      soundVolume=125;
     }
 
-    function paintSoundToggle(){
-      if(!soundToggle)return;
-      soundToggle.setAttribute('aria-pressed',String(soundEnabled));
-      soundToggle.setAttribute(
-        'aria-label',
-        soundEnabled?'메시지 알림음 끄기':'메시지 알림음 켜기'
-      );
-      const icon=soundToggle.querySelector('.sound-icon');
-      if(icon)icon.textContent=soundEnabled?'🔊':'🔇';
+    function paintSoundControls(){
+      if(soundToggle){
+        soundToggle.setAttribute('aria-pressed',String(soundEnabled));
+        soundToggle.setAttribute(
+          'aria-label',
+          soundEnabled?'메시지 알림음 끄기':'메시지 알림음 켜기'
+        );
+        const icon=soundToggle.querySelector('.sound-icon');
+        if(icon)icon.textContent=soundEnabled?'🔊':'🔇';
+      }
+      if(soundTypeSelect)soundTypeSelect.value=soundType;
+      if(soundVolumeInput)soundVolumeInput.value=String(soundVolume);
+      if(soundVolumeValue)soundVolumeValue.textContent=soundVolume+'%';
+      updateMasterVolume();
     }
 
     function ensureAudioContext(){
@@ -3847,12 +4004,41 @@ body,.app-frame,.auth-screen,.chat-scroll{
       const AudioCtx=window.AudioContext||window.webkitAudioContext;
       if(!AudioCtx)return null;
       try{
-        if(!audioContext)audioContext=new AudioCtx();
+        if(!audioContext){
+          audioContext=new AudioCtx();
+          audioMaster=audioContext.createGain();
+          audioCompressor=audioContext.createDynamicsCompressor();
+          /* 100%를 넘겨도 너무 거칠게 깨지지 않도록 피크를 부드럽게 제어 */
+          audioCompressor.threshold.value=-5;
+          audioCompressor.knee.value=12;
+          audioCompressor.ratio.value=5;
+          audioCompressor.attack.value=.002;
+          audioCompressor.release.value=.12;
+          audioMaster.connect(audioCompressor).connect(audioContext.destination);
+          updateMasterVolume();
+        }
         if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});
         return audioContext;
       }catch(_){
         return null;
       }
+    }
+
+    function updateMasterVolume(){
+      if(!audioMaster||!audioContext)return;
+      /* GainNode는 1.0을 넘길 수 있음. 200%는 2.0배 게인. */
+      const level=Math.max(.25,Math.min(2,soundVolume/100));
+      try{
+        audioMaster.gain.cancelScheduledValues(audioContext.currentTime);
+        audioMaster.gain.setTargetAtTime(level,audioContext.currentTime,.01);
+      }catch(_){
+        audioMaster.gain.value=level;
+      }
+    }
+
+    function audioOutput(ctx){
+      ensureAudioContext();
+      return audioMaster||ctx.destination;
     }
 
     function shutterBurst(ctx,when,duration,volume,highpass){
@@ -3872,19 +4058,59 @@ body,.app-frame,.auth-screen,.chat-scroll{
       gain.gain.setValueAtTime(volume,when);
       gain.gain.exponentialRampToValueAtTime(0.0001,when+duration);
       source.buffer=buffer;
-      source.connect(filter).connect(gain).connect(ctx.destination);
+      source.connect(filter).connect(gain).connect(audioOutput(ctx));
       source.start(when);
       source.stop(when+duration+.01);
     }
 
-    function playShutterSound(){
+    function tone(ctx,when,freq,duration,volume,type='sine',endFreq=null){
+      const osc=ctx.createOscillator();
+      const gain=ctx.createGain();
+      osc.type=type;
+      osc.frequency.setValueAtTime(freq,when);
+      if(endFreq&&endFreq>0){
+        osc.frequency.exponentialRampToValueAtTime(endFreq,when+duration);
+      }
+      gain.gain.setValueAtTime(Math.max(.0001,volume),when);
+      gain.gain.exponentialRampToValueAtTime(.0001,when+duration);
+      osc.connect(gain).connect(audioOutput(ctx));
+      osc.start(when);
+      osc.stop(when+duration+.01);
+    }
+
+    function playSelectedSound(){
       if(!soundEnabled)return;
       const ctx=ensureAudioContext();
       if(!ctx||ctx.state!=='running')return;
-      const now=ctx.currentTime+.005;
-      /* '찰-칵' 두 번의 아주 짧은 기계음. 전체 음량은 낮게 유지 */
-      shutterBurst(ctx,now,.032,.950,1500);
-      shutterBurst(ctx,now+.045,.022,.750,2100);
+      const now=ctx.currentTime+.008;
+
+      switch(soundType){
+        case 'chime':
+          /* 밝고 짧은 '딩' */
+          tone(ctx,now,880,.24,.46,'sine',690);
+          tone(ctx,now+.012,1760,.12,.10,'sine',1380);
+          break;
+        case 'pop':
+          /* 짧고 가벼운 '톡' */
+          tone(ctx,now,1050,.085,.55,'triangle',430);
+          break;
+        case 'ping':
+          /* 또렷한 '핑' */
+          tone(ctx,now,1320,.18,.38,'sine',1100);
+          tone(ctx,now+.008,2640,.08,.08,'sine',2200);
+          break;
+        case 'dingdong':
+          /* 두 음으로 들리는 '딩동' */
+          tone(ctx,now,880,.19,.36,'sine',820);
+          tone(ctx,now+.13,660,.25,.32,'sine',610);
+          break;
+        case 'shutter':
+        default:
+          /* 사용자가 지정한 현재 찰칵 기준 음량. 슬라이더가 여기에 25~200%를 곱함. */
+          shutterBurst(ctx,now,.032,.950,1500);
+          shutterBurst(ctx,now+.045,.022,.750,2100);
+          break;
+      }
     }
 
     function unreadRoomMap(unreadList){
@@ -3911,7 +4137,6 @@ body,.app-frame,.auth-screen,.chat-scroll{
           break;
         }
         const oldMarker=previousUnreadRooms.get(room);
-        /* 식별자가 실제로 제공되는 경우 같은 방의 추가 메시지도 감지 */
         if(marker&&oldMarker&&marker!==oldMarker&&currentLatestId===previousLatestMessageId){
           fresh=true;
           break;
@@ -3934,14 +4159,14 @@ body,.app-frame,.auth-screen,.chat-scroll{
         :(previousUnreadRooms=unreadRoomMap(state?.unread),false);
 
       if(soundStateReady&&(currentRoomIncoming||otherRoomIncoming)){
-        playShutterSound();
+        playSelectedSound();
       }
 
       previousLatestMessageId=latestId;
       soundStateReady=true;
     }
 
-    paintSoundToggle();
+    paintSoundControls();
 
     /* 오디오 재생 권한을 사용자의 첫 상호작용에서 미리 활성화 */
     const armAudio=()=>{
@@ -3953,11 +4178,69 @@ body,.app-frame,.auth-screen,.chat-scroll{
     soundToggle?.addEventListener('click',()=>{
       soundEnabled=!soundEnabled;
       try{localStorage.setItem(SOUND_KEY,soundEnabled?'on':'off')}catch(_){}
-      paintSoundToggle();
+      paintSoundControls();
       if(soundEnabled){
         ensureAudioContext();
-        /* 켰을 때 현재 음량을 바로 확인할 수 있도록 한 번만 작게 테스트 */
-        setTimeout(playShutterSound,25);
+        setTimeout(playSelectedSound,30);
+      }
+    });
+
+    soundSettings?.addEventListener('click',e=>{
+      e.stopPropagation();
+      const open=!!soundPanel?.hidden;
+      if(soundPanel)soundPanel.hidden=!open;
+      soundSettings.setAttribute('aria-expanded',String(open));
+    });
+
+    soundPanel?.addEventListener('click',e=>e.stopPropagation());
+
+    soundTypeSelect?.addEventListener('change',()=>{
+      const next=soundTypeSelect.value;
+      if(!VALID_SOUND_TYPES.has(next))return;
+      soundType=next;
+      try{localStorage.setItem(SOUND_TYPE_KEY,soundType)}catch(_){}
+      if(soundEnabled){
+        ensureAudioContext();
+        setTimeout(playSelectedSound,20);
+      }
+    });
+
+    soundVolumeInput?.addEventListener('input',()=>{
+      const next=Math.max(25,Math.min(200,Number(soundVolumeInput.value)||100));
+      soundVolume=next;
+      if(soundVolumeValue)soundVolumeValue.textContent=next+'%';
+      updateMasterVolume();
+    });
+
+    soundVolumeInput?.addEventListener('change',()=>{
+      try{localStorage.setItem(SOUND_VOLUME_KEY,String(soundVolume))}catch(_){}
+      if(soundEnabled){
+        ensureAudioContext();
+        setTimeout(playSelectedSound,20);
+      }
+    });
+
+    soundPreview?.addEventListener('click',()=>{
+      if(!soundEnabled){
+        soundEnabled=true;
+        try{localStorage.setItem(SOUND_KEY,'on')}catch(_){}
+        paintSoundControls();
+      }
+      ensureAudioContext();
+      setTimeout(playSelectedSound,20);
+    });
+
+    document.addEventListener('click',e=>{
+      if(!soundControl?.contains(e.target)&&soundPanel&&!soundPanel.hidden){
+        soundPanel.hidden=true;
+        soundSettings?.setAttribute('aria-expanded','false');
+      }
+    });
+    document.addEventListener('keydown',e=>{
+      if(e.key==='Escape'&&soundPanel&&!soundPanel.hidden){
+        soundPanel.hidden=true;
+        soundSettings?.setAttribute('aria-expanded','false');
+        soundSettings?.focus();
       }
     });
 
