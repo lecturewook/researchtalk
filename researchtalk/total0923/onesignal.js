@@ -58,195 +58,213 @@
   }
 
   function showVerificationDialog() {
-    if (dialogShown || !global.document?.body) return;
-    dialogShown = true;
 
-    const overlay = document.createElement('div');
-    overlay.id = 'onesignal-verification-modal';
-    overlay.setAttribute('role', 'presentation');
-    overlay.style.cssText = [
-      'position:fixed',
-      'inset:0',
-      'z-index:2147483646',
-      'display:flex',
-      'align-items:center',
-      'justify-content:center',
-      'padding:20px',
-      'background:rgba(0,0,0,.42)'
-    ].join(';');
+  const NOTICE_KEY =
+    'researchtalk.onesignalNoticeSeen.v1';
 
-    const card = document.createElement('section');
-    card.setAttribute('role', 'dialog');
-    card.setAttribute('aria-modal', 'true');
-    card.setAttribute('aria-labelledby', 'onesignal-verification-title');
-    card.style.cssText = [
-      'width:min(420px,100%)',
-      'box-sizing:border-box',
-      'background:#fff',
-      'border:1px solid #d5d5d5',
-      'border-radius:8px',
-      'box-shadow:0 18px 48px rgba(0,0,0,.22)',
-      'padding:22px',
-      'font-family:"Malgun Gothic","맑은 고딕",Arial,sans-serif',
-      'color:#202020'
-    ].join(';');
 
-    const title = document.createElement('h2');
-    title.id = 'onesignal-verification-title';
-    title.textContent = 'Your OneSignal SDK integration is complete!';
-    title.style.cssText = 'margin:0 0 10px;font-size:18px;line-height:1.45;';
-
-    const message = document.createElement('p');
-    message.textContent = 'You can now send Push Notifications & In-App Messages through OneSignal. Tap below to enable push notifications.';
-    message.style.cssText = 'margin:0 0 18px;font-size:13px;line-height:1.7;color:#555;';
-
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.textContent = 'Got it';
-    button.style.cssText = [
-      'display:block',
-      'width:100%',
-      'min-height:42px',
-      'border:0',
-      'border-radius:5px',
-      'background:#107c41',
-      'color:#fff',
-      'font:700 13px "Malgun Gothic","맑은 고딕",Arial,sans-serif',
-      'cursor:pointer'
-    ].join(';');
-
-    button.addEventListener('click', async function () {
-      button.disabled = true;
-      try {
-        await requestPermission();
-      } catch (error) {
-        console.warn('[researchtalk] OneSignal permission request failed:', error);
-      } finally {
-        overlay.remove();
-      }
-    }, { once: true });
-
-    card.append(title, message, button);
-    overlay.append(card);
-    document.body.append(overlay);
-    button.focus();
+  /* 이미 현재 페이지에서 띄웠으면 중복 방지 */
+  if (
+    dialogShown ||
+    !global.document?.body
+  ) {
+    return;
   }
 
-  function ensureInitialized() {
-    if (initPromise) return initPromise;
 
-    initPromise = new Promise((resolve, reject) => {
-      deferred(async function (OneSignal) {
-        try {
-          sdk = OneSignal;
+  /* 이미 한 번 본 기기에서는 다시 표시하지 않음 */
+  try {
 
-          const options = {
-            appId: APP_ID,
-            serviceWorkerPath: SERVICE_WORKER_PATH,
-            serviceWorkerParam: { scope: SERVICE_WORKER_SCOPE }
-          };
-
-          if (isLocalhost()) {
-            options.allowLocalhostAsSecureOrigin = true;
-          }
-
-          await OneSignal.init(options);
-
-          // 초기화 직후 구독 변경 관찰자를 설치하고 현재 상태도 즉시 확인합니다.
-          installSubscriptionObserver();
-
-          // Web에서는 권한 승인 전 Subscription ID가 보통 없으므로,
-          // 초기화 완료 뒤 확인창을 먼저 보여주고 Got it에서만 권한을 요청합니다.
-          showVerificationDialog();
-
-          resolve(OneSignal);
-        } catch (error) {
-          console.error('[researchtalk] OneSignal initialization failed:', error);
-          reject(error);
-        }
-      });
-    });
-
-    return initPromise;
-  }
-
-  async function requestPermission() {
-    const OneSignal = await ensureInitialized();
-
-    if (!OneSignal.Notifications.isPushSupported()) {
-      console.warn('[researchtalk] This browser does not support web push.');
-      return false;
-    }
-
-    await OneSignal.Notifications.requestPermission();
-    confirmRegistration();
-    return OneSignal.Notifications.permission === true;
-  }
-
-  async function login(externalId) {
-    const id = String(externalId || '').trim();
-    if (!id || id === currentExternalId) return;
-
-    const OneSignal = await ensureInitialized();
-    await OneSignal.login(id);
-    currentExternalId = id;
-  }
-
-  async function logout() {
-    if (!currentExternalId) return;
-
-    const OneSignal = await ensureInitialized();
-    await OneSignal.logout();
-    currentExternalId = null;
-  }
-
-  async function syncUser(externalId) {
-    const id = externalId ? String(externalId).trim() : '';
-
-    if (id) {
-      await login(id);
+    if (
+      localStorage.getItem(
+        NOTICE_KEY
+      ) === '1'
+    ) {
       return;
     }
 
-    if (currentExternalId) {
-      await logout();
+  } catch (_) {}
+
+
+  /* 이미 알림 권한이 허용되어 있으면 안내창 불필요 */
+  if (
+    typeof Notification !== 'undefined' &&
+    Notification.permission === 'granted'
+  ) {
+
+    try {
+      localStorage.setItem(
+        NOTICE_KEY,
+        '1'
+      );
+    } catch (_) {}
+
+    return;
+  }
+
+
+  dialogShown = true;
+
+
+  /*
+    "한 번만" 표시하기 위해
+    처음 보여주는 순간 기록합니다.
+  */
+
+  try {
+    localStorage.setItem(
+      NOTICE_KEY,
+      '1'
+    );
+  } catch (_) {}
+
+
+  const overlay =
+    document.createElement('div');
+
+  overlay.id =
+    'onesignal-verification-modal';
+
+  overlay.setAttribute(
+    'role',
+    'presentation'
+  );
+
+  overlay.style.cssText = [
+    'position:fixed',
+    'inset:0',
+    'z-index:2147483646',
+    'display:flex',
+    'align-items:center',
+    'justify-content:center',
+    'padding:20px',
+    'background:rgba(0,0,0,.42)'
+  ].join(';');
+
+
+  const card =
+    document.createElement('section');
+
+  card.setAttribute(
+    'role',
+    'dialog'
+  );
+
+  card.setAttribute(
+    'aria-modal',
+    'true'
+  );
+
+  card.setAttribute(
+    'aria-labelledby',
+    'onesignal-verification-title'
+  );
+
+  card.style.cssText = [
+    'width:min(420px,100%)',
+    'box-sizing:border-box',
+    'background:#fff',
+    'border:1px solid #d5d5d5',
+    'border-radius:8px',
+    'box-shadow:0 18px 48px rgba(0,0,0,.22)',
+    'padding:22px',
+    'font-family:"Malgun Gothic","맑은 고딕",Arial,sans-serif',
+    'color:#202020'
+  ].join(';');
+
+
+  const title =
+    document.createElement('h2');
+
+  title.id =
+    'onesignal-verification-title';
+
+  title.textContent =
+    '새 메시지 알림 기능이 추가되었어요!';
+
+  title.style.cssText =
+    'margin:0 0 10px;font-size:18px;line-height:1.5;';
+
+
+  const message =
+    document.createElement('p');
+
+  message.textContent =
+    '이제 ResearchTalk에 새 대화가 오면 브라우저와 휴대폰에서 알림을 받을 수 있어요😊👍. 아래 버튼을 눌러 알림을 켜주세요.';
+
+  message.style.cssText =
+    'margin:0 0 18px;font-size:13px;line-height:1.75;color:#555;';
+
+
+  const button =
+    document.createElement('button');
+
+  button.type =
+    'button';
+
+  button.textContent =
+    '알림 켜기';
+
+  button.style.cssText = [
+    'display:block',
+    'width:100%',
+    'min-height:42px',
+    'border:0',
+    'border-radius:5px',
+    'background:#107c41',
+    'color:#fff',
+    'font:700 13px "Malgun Gothic","맑은 고딕",Arial,sans-serif',
+    'cursor:pointer'
+  ].join(';');
+
+
+  button.addEventListener(
+    'click',
+    async function () {
+
+      button.disabled = true;
+
+      button.textContent =
+        '알림 설정 중...';
+
+
+      try {
+
+        await requestPermission();
+
+      } catch (error) {
+
+        console.warn(
+          '[researchtalk] OneSignal permission request failed:',
+          error
+        );
+
+      } finally {
+
+        overlay.remove();
+
+      }
+
+    },
+    {
+      once:true
     }
-  }
+  );
 
-  async function addEmail(email) {
-    const value = String(email || '').trim();
-    if (!value) return;
-    const OneSignal = await ensureInitialized();
-    OneSignal.User.addEmail(value);
-  }
 
-  async function addSms(phone) {
-    const value = String(phone || '').trim();
-    if (!value) return;
-    const OneSignal = await ensureInitialized();
-    OneSignal.User.addSms(value);
-  }
+  card.append(
+    title,
+    message,
+    button
+  );
 
-  async function addTag(key, value) {
-    const tagKey = String(key || '').trim();
-    if (!tagKey) return;
-    const OneSignal = await ensureInitialized();
-    OneSignal.User.addTag(tagKey, String(value ?? ''));
-  }
+  overlay.append(
+    card
+  );
 
-  global.RTOneSignal = Object.freeze({
-    init: ensureInitialized,
-    login,
-    logout,
-    syncUser,
-    requestPermission,
-    addEmail,
-    addSms,
-    addTag,
-    subscriptionId: getRealSubscriptionId
-  });
+  document.body.append(
+    overlay
+  );
 
-  // SDK 초기화는 가능한 한 일찍 한 번만 수행합니다.
-  ensureInitialized().catch(() => {});
-
-})(window);
+  button.focus();
+}
