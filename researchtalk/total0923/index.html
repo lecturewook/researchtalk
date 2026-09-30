@@ -16,6 +16,10 @@
   <link rel="icon" type="image/jpeg" href="./icons/favicon-32.jpg?v=20260929" sizes="32x32" />
   <link rel="stylesheet" href="./styles.css?ui=compact-20260925" />
 
+  <!-- OneSignal Web SDK v16 (CDN) + ResearchTalk 중앙 래퍼 -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script defer src="./onesignal.js?ui=onesignal-20260930"></script>
+
   <script defer src="./vendor/supabase.js?ui=compact-20260925"></script>
   <script defer src="./dates.js?ui=compact-20260925"></script>
   <script defer src="./config.js?ui=compact-20260925"></script>
@@ -4777,6 +4781,9 @@ body:not([data-workspace-theme="hwp"]) .hwp-document-page .daily-marker::before{
       const unreadCount=getUnreadCount(state);
       unread.hidden=unreadCount===0;
       updateUnreadIndicators(unreadCount);
+
+      /* Supabase auth.uid() (= state.self)를 OneSignal External ID와 동기화 */
+      window.RTOneSignal?.syncUser?.(state?.self||null).catch?.(()=>{});
 
       if(lastSelf!==state?.self){
         attention=false;
