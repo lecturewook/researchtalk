@@ -2908,7 +2908,10 @@ body,.app-frame,.auth-screen,.chat-scroll{
   body[data-workspace-theme="hwp"] .hwp-document-page{width:min(1240px,calc(100% - 18px))!important;}
 }
 
-/* v7: 읽지 않은 메시지 표시 — 브라우저 탭/대화 탭은 빨간 점으로 표시 */
+/* v16: 읽지 않은 메시지 표시
+   - 데스크톱: 기존처럼 대화 탭 아이콘 대신 빨간 점
+   - 모바일: 대화 아이콘은 유지하고 우측 위에 빨간 숫자 배지
+*/
 .bottom-nav button[data-tab="chat"].has-unread .icon{
   display:none!important;
 }
@@ -2922,6 +2925,52 @@ body,.app-frame,.auth-screen,.chat-scroll{
   box-shadow:0 0 0 1px rgba(217,48,37,.12);
   margin:0 5px 0 0!important;
   vertical-align:middle;
+}
+
+.mobile-unread-count{
+  display:none;
+}
+
+@media(max-width:1099px){
+  .bottom-nav button[data-tab="chat"]{
+    position:relative;
+  }
+
+  /* 모바일에서는 채팅 아이콘을 숨기지 않고 숫자 배지를 겹쳐 표시 */
+  .bottom-nav button[data-tab="chat"].has-unread .icon{
+    display:block!important;
+  }
+  .bottom-nav button[data-tab="chat"].has-unread .unread-dot{
+    display:none!important;
+  }
+
+  .mobile-unread-count{
+    position:absolute;
+    top:1px;
+    left:50%;
+    transform:translateX(9px);
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:18px;
+    height:18px;
+    padding:0 5px;
+    box-sizing:border-box;
+    border:2px solid #fff;
+    border-radius:10px;
+    background:#e53935;
+    color:#fff;
+    font-family:"Malgun Gothic","맑은 고딕",Arial,sans-serif;
+    font-size:10px;
+    font-weight:700;
+    line-height:14px;
+    z-index:3;
+    pointer-events:none;
+    font-variant-numeric:tabular-nums;
+  }
+  .mobile-unread-count[hidden]{
+    display:none!important;
+  }
 }
 </style>
 
@@ -3875,6 +3924,12 @@ body:not([data-workspace-theme="hwp"]) .hwp-document-page .daily-marker::before{
       <svg class="icon"><use href="#i-chat"/></svg>
       <span>대화</span>
       <span class="unread-dot" aria-hidden="true" hidden></span>
+      <span
+        id="mobile-unread-count"
+        class="mobile-unread-count"
+        aria-label="읽지 않은 메시지"
+        hidden
+      ></span>
     </button>
     <button data-tab="members">
       <svg class="icon"><use href="#i-users"/></svg>
@@ -3987,12 +4042,75 @@ body:not([data-workspace-theme="hwp"]) .hwp-document-page .daily-marker::before{
     /* 테마 전환 스크립트에서도 현재 읽음 상태를 유지한 채 아이콘만 갱신할 수 있게 공개 */
     window.RTRefreshBrowserFavicon=refreshBrowserFavicon;
 
-    function updateUnreadIndicators(hasUnread){
-      faviconHasUnread=!!hasUnread;
+    /*
+      읽지 않은 메시지 개수 계산
+      - 서버가 count/unread_count 등을 주면 그 값을 우선 사용
+      - 그렇지 않으면 현재 방의 unread 메시지를 세고, 다른 방은 unread 항목 수를 더함
+      - 기존 스냅샷 형식과도 호환되도록 보수적으로 처리
+    */
+    function getUnreadCount(state){
+      const list=Array.isArray(state?.unread)?state.unread:[];
+      let explicitTotal=0;
+      let hasExplicitCount=false;
+
+      for(const item of list){
+        if(!item||typeof item!=='object')continue;
+        const raw=
+          item.unreadCount??item.unread_count??
+          item.messageCount??item.message_count??
+          item.count;
+        const n=Number(raw);
+        if(Number.isFinite(n)&&n>=0){
+          explicitTotal+=n;
+          hasExplicitCount=true;
+        }
+      }
+
+      if(hasExplicitCount){
+        return Math.max(0,Math.floor(explicitTotal));
+      }
+
+      const currentUnread=Array.isArray(state?.messages)
+        ?state.messages.filter(m=>m?.unread).length
+        :0;
+
+      if(currentUnread>0){
+        const currentRoom=String(state?.roomId??'');
+        const otherUnreadEntries=list.filter(item=>{
+          const room=String(
+            item?.roomId??item?.room_id??item?.room??''
+          );
+          return !currentRoom||room!==currentRoom;
+        }).length;
+        return currentUnread+otherUnreadEntries;
+      }
+
+      return list.length;
+    }
+
+    function updateInstalledAppBadge(count){
+      const n=Math.max(0,Number(count)||0);
+      try{
+        if(n>0&&'setAppBadge' in navigator){
+          Promise.resolve(navigator.setAppBadge(n)).catch(()=>{});
+        }else if(n===0&&'clearAppBadge' in navigator){
+          Promise.resolve(navigator.clearAppBadge()).catch(()=>{});
+        }
+      }catch(_){
+        /* Badging API 미지원 환경에서는 조용히 무시 */
+      }
+    }
+
+    function updateUnreadIndicators(unreadCount){
+      const count=Math.max(0,Number(unreadCount)||0);
+      const hasUnread=count>0;
+
+      faviconHasUnread=hasUnread;
       refreshBrowserFavicon();
 
       const chatTab=document.querySelector('.bottom-nav [data-tab="chat"]');
       const dot=chatTab?.querySelector('.unread-dot');
+      const numberBadge=$('mobile-unread-count');
 
       if(chatTab){
         chatTab.classList.toggle('has-unread',hasUnread);
@@ -4000,6 +4118,19 @@ body:not([data-workspace-theme="hwp"]) .hwp-document-page .daily-marker::before{
       if(dot){
         dot.hidden=!hasUnread;
       }
+      if(numberBadge){
+        numberBadge.hidden=!hasUnread;
+        numberBadge.textContent=hasUnread
+          ?(count>99?'99+':String(count))
+          :'';
+        numberBadge.setAttribute(
+          'aria-label',
+          hasUnread?`읽지 않은 메시지 ${count}개`:'읽지 않은 메시지 없음'
+        );
+      }
+
+      /* 홈 화면에 설치한 PWA가 지원하면 앱 아이콘 배지도 같은 숫자로 갱신 */
+      updateInstalledAppBadge(count);
     }
 
     /* -------------------------------------------------------
@@ -4643,8 +4774,9 @@ body:not([data-workspace-theme="hwp"]) .hwp-document-page .daily-marker::before{
         $('today-number').textContent+'일 '+
         $('today-weekday').textContent;
 
-      unread.hidden=!state?.unread?.length;
-      updateUnreadIndicators(!!state?.unread?.length);
+      const unreadCount=getUnreadCount(state);
+      unread.hidden=unreadCount===0;
+      updateUnreadIndicators(unreadCount);
 
       if(lastSelf!==state?.self){
         attention=false;
