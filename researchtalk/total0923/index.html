@@ -4047,96 +4047,350 @@ body:not([data-workspace-theme="hwp"]) .hwp-document-page .daily-marker::before{
     window.RTRefreshBrowserFavicon=refreshBrowserFavicon;
 
     /*
-      읽지 않은 메시지 개수 계산
-      - 서버가 count/unread_count 등을 주면 그 값을 우선 사용
-      - 그렇지 않으면 현재 방의 unread 메시지를 세고, 다른 방은 unread 항목 수를 더함
-      - 기존 스냅샷 형식과도 호환되도록 보수적으로 처리
-    */
-    function getUnreadCount(state){
-      const list=Array.isArray(state?.unread)?state.unread:[];
-      let explicitTotal=0;
-      let hasExplicitCount=false;
+    /*
+  읽지 않은 메시지 개수 계산
 
-      for(const item of list){
-        if(!item||typeof item!=='object')continue;
-        const raw=
-          item.unreadCount??item.unread_count??
-          item.messageCount??item.message_count??
-          item.count;
-        const n=Number(raw);
-        if(Number.isFinite(n)&&n>=0){
-          explicitTotal+=n;
-          hasExplicitCount=true;
-        }
-      }
+  우선순위
+  1. 새 rt_snapshot()의 state.unreadCount 사용
+  2. 이전 형식의 unread 항목 내부 count 사용
+  3. 현재 방 unread + 다른 방 unread 항목 수 계산
+  4. 최후에는 unread 배열 길이 사용
 
-      if(hasExplicitCount){
-        return Math.max(0,Math.floor(explicitTotal));
-      }
+  이렇게 하면 기존 스냅샷과도 호환됩니다.
+*/
+function getUnreadCount(state){
 
-      const currentUnread=Array.isArray(state?.messages)
-        ?state.messages.filter(m=>m?.unread).length
-        :0;
+  /* -------------------------------------------------------
+     1. 새 Supabase rt_snapshot()의 정확한 전체 미읽음 수
+  ------------------------------------------------------- */
 
-      if(currentUnread>0){
-        const currentRoom=String(state?.roomId??'');
-        const otherUnreadEntries=list.filter(item=>{
-          const room=String(
-            item?.roomId??item?.room_id??item?.room??''
+  const serverCount=Number(
+    state?.unreadCount ??
+    state?.unread_count
+  );
+
+  if(
+    Number.isFinite(serverCount) &&
+    serverCount>=0
+  ){
+    return Math.floor(serverCount);
+  }
+
+
+  /* -------------------------------------------------------
+     2. 이전 snapshot 형식 호환
+  ------------------------------------------------------- */
+
+  const list=
+    Array.isArray(state?.unread)
+      ?state.unread
+      :[];
+
+  let explicitTotal=0;
+  let hasExplicitCount=false;
+
+
+  for(const item of list){
+
+    if(
+      !item ||
+      typeof item!=='object'
+    ){
+      continue;
+    }
+
+
+    const raw=
+      item.unreadCount ??
+      item.unread_count ??
+      item.messageCount ??
+      item.message_count ??
+      item.count;
+
+
+    const n=Number(raw);
+
+
+    if(
+      Number.isFinite(n) &&
+      n>=0
+    ){
+      explicitTotal+=n;
+      hasExplicitCount=true;
+    }
+
+  }
+
+
+  if(hasExplicitCount){
+
+    return Math.max(
+      0,
+      Math.floor(explicitTotal)
+    );
+
+  }
+
+
+  /* -------------------------------------------------------
+     3. 현재 보고 있는 방의 unread 메시지 수 계산
+  ------------------------------------------------------- */
+
+  const currentUnread=
+    Array.isArray(state?.messages)
+
+      ?state.messages.filter(
+        message=>message?.unread===true
+      ).length
+
+      :0;
+
+
+  /*
+    현재 방의 실제 unread 개수를 알 수 있다면
+
+    현재 방:
+      messages 배열에서 정확히 계산
+
+    다른 방:
+      state.unread에 방마다 1개씩 들어 있으므로
+      다른 방의 unread 존재 여부를 더합니다.
+  */
+
+  if(currentUnread>0){
+
+    const currentRoom=
+      String(
+        state?.roomId ?? ''
+      );
+
+
+    const otherUnreadEntries=
+      list.filter(item=>{
+
+        const room=
+          String(
+            item?.roomId ??
+            item?.room_id ??
+            item?.room ??
+            ''
           );
-          return !currentRoom||room!==currentRoom;
-        }).length;
-        return currentUnread+otherUnreadEntries;
-      }
 
-      return list.length;
-    }
 
-    function updateInstalledAppBadge(count){
-      const n=Math.max(0,Number(count)||0);
-      try{
-        if(n>0&&'setAppBadge' in navigator){
-          Promise.resolve(navigator.setAppBadge(n)).catch(()=>{});
-        }else if(n===0&&'clearAppBadge' in navigator){
-          Promise.resolve(navigator.clearAppBadge()).catch(()=>{});
-        }
-      }catch(_){
-        /* Badging API 미지원 환경에서는 조용히 무시 */
-      }
-    }
-
-    function updateUnreadIndicators(unreadCount){
-      const count=Math.max(0,Number(unreadCount)||0);
-      const hasUnread=count>0;
-
-      faviconHasUnread=hasUnread;
-      refreshBrowserFavicon();
-
-      const chatTab=document.querySelector('.bottom-nav [data-tab="chat"]');
-      const dot=chatTab?.querySelector('.unread-dot');
-      const numberBadge=$('mobile-unread-count');
-
-      if(chatTab){
-        chatTab.classList.toggle('has-unread',hasUnread);
-      }
-      if(dot){
-        dot.hidden=!hasUnread;
-      }
-      if(numberBadge){
-        numberBadge.hidden=!hasUnread;
-        numberBadge.textContent=hasUnread
-          ?(count>99?'99+':String(count))
-          :'';
-        numberBadge.setAttribute(
-          'aria-label',
-          hasUnread?`읽지 않은 메시지 ${count}개`:'읽지 않은 메시지 없음'
+        return (
+          !currentRoom ||
+          room!==currentRoom
         );
-      }
 
-      /* 홈 화면에 설치한 PWA가 지원하면 앱 아이콘 배지도 같은 숫자로 갱신 */
-      updateInstalledAppBadge(count);
+      }).length;
+
+
+    return (
+      currentUnread +
+      otherUnreadEntries
+    );
+
+  }
+
+
+  /* -------------------------------------------------------
+     4. 가장 오래된 snapshot 형식 fallback
+  ------------------------------------------------------- */
+
+  return list.length;
+}
+
+
+/* =========================================================
+   설치된 PWA 앱 아이콘 배지
+========================================================= */
+
+function updateInstalledAppBadge(count){
+
+  const n=
+    Math.max(
+      0,
+      Math.floor(
+        Number(count)||0
+      )
+    );
+
+
+  try{
+
+    /*
+      숫자가 1 이상이면
+      지원되는 환경에서 앱 아이콘 배지 갱신
+    */
+
+    if(
+      n>0 &&
+      'setAppBadge' in navigator
+    ){
+
+      Promise
+        .resolve(
+          navigator.setAppBadge(n)
+        )
+        .catch(()=>{});
+
     }
 
+
+    /*
+      읽지 않은 메시지가 0이면
+      앱 아이콘 배지 제거
+    */
+
+    else if(
+      n===0 &&
+      'clearAppBadge' in navigator
+    ){
+
+      Promise
+        .resolve(
+          navigator.clearAppBadge()
+        )
+        .catch(()=>{});
+
+    }
+
+  }catch(_){
+
+    /*
+      Badging API를 지원하지 않는
+      브라우저/운영체제에서는 무시
+    */
+
+  }
+
+}
+
+
+/* =========================================================
+   ResearchTalk 내부 읽지 않은 메시지 UI 갱신
+========================================================= */
+
+function updateUnreadIndicators(unreadCount){
+
+  const count=
+    Math.max(
+      0,
+      Math.floor(
+        Number(unreadCount)||0
+      )
+    );
+
+
+  const hasUnread=
+    count>0;
+
+
+  /* -------------------------------------------------------
+     브라우저 favicon
+  ------------------------------------------------------- */
+
+  faviconHasUnread=
+    hasUnread;
+
+  refreshBrowserFavicon();
+
+
+  /* -------------------------------------------------------
+     하단 대화 탭
+  ------------------------------------------------------- */
+
+  const chatTab=
+    document.querySelector(
+      '.bottom-nav [data-tab="chat"]'
+    );
+
+
+  const dot=
+    chatTab?.querySelector(
+      '.unread-dot'
+    );
+
+
+  const numberBadge=
+    $('mobile-unread-count');
+
+
+  if(chatTab){
+
+    chatTab.classList.toggle(
+      'has-unread',
+      hasUnread
+    );
+
+  }
+
+
+  /*
+    기존 데스크톱 빨간 점
+  */
+
+  if(dot){
+
+    dot.hidden=
+      !hasUnread;
+
+  }
+
+
+  /*
+    모바일 숫자 배지
+
+    1
+    2
+    3
+    ...
+    99+
+  */
+
+  if(numberBadge){
+
+    numberBadge.hidden=
+      !hasUnread;
+
+
+    numberBadge.textContent=
+      hasUnread
+
+        ?(
+          count>99
+            ?'99+'
+            :String(count)
+        )
+
+        :'';
+
+
+    numberBadge.setAttribute(
+
+      'aria-label',
+
+      hasUnread
+        ?`읽지 않은 메시지 ${count}개`
+        :'읽지 않은 메시지 없음'
+
+    );
+
+  }
+
+
+  /* -------------------------------------------------------
+     홈 화면에 설치된 PWA 앱 아이콘
+
+     지원되는 환경이면
+     같은 숫자로 갱신
+  ------------------------------------------------------- */
+
+  updateInstalledAppBadge(
+    count
+  );
+
+}
     /* -------------------------------------------------------
        v14 메시지 알림음
        - 🔊/🔇 버튼: 알림음 ON/OFF
