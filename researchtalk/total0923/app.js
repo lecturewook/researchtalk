@@ -75,50 +75,33 @@
   const roomInfo=id=>
     data?.rooms.find(r=>r.id===id);
 
-const roomName=r=>{
+  const roomName=r=>{
 
-  if(!r){
-    return '대화';
-  }
-
-
-  if(r.kind==='group'){
-
-    /*
-      고정 전체방
-    */
-
-    if(r.id===S.GROUP){
-      return '우리 모두';
+    if(!r){
+      return '대화';
     }
 
+    if(r.kind==='group'){
 
-    /*
-      사용자 지정 그룹방
-    */
+      if(r.id===S.GROUP){
+        return '우리 모두';
+      }
+
+      return (
+        r.title||
+        '그룹 대화'
+      );
+    }
 
     return (
-      r.title||
-      '그룹 대화'
-    );
-
-  }
-
-
-  /*
-    개인대화
-  */
-
-  return (
-    member(
-      r.a===data?.self
-        ?r.b
-        :r.a
-    )?.name||
-    '참여자'
-  )+'님';
-
-};
+      member(
+        r.a===data?.self
+          ?r.b
+          :r.a
+      )?.name||
+      '참여자'
+    )+'님';
+  };
 
   const connected=()=>
     info.status==='connected'&&!data?.loading;
@@ -253,20 +236,14 @@ const roomName=r=>{
           ()=>action(
             async()=>{
               await fn();
-
               closeModal();
-
-              toast(
-                '삭제했어요.'
-              );
+              toast('삭제했어요.');
             },
             b
           )
         );
 
-        b.style.marginTop=
-          '20px';
-
+        b.style.marginTop='20px';
         body.append(b);
       }
     );
@@ -1005,7 +982,7 @@ const roomName=r=>{
       });
   }
 
-  function scheduleRead(){
+   function scheduleRead(){
     clearTimeout(
       readTimer
     );
@@ -1082,9 +1059,6 @@ const roomName=r=>{
     }
   }
 
-  /*
-   * 답장 대상 표시줄
-   */
   function renderReplyBar(){
     let bar=
       document.querySelector(
@@ -1167,9 +1141,6 @@ const roomName=r=>{
     );
   }
 
-  /*
-   * 답장 대상 선택
-   */
   function setReplyTarget(message){
     if(
       data?.day!==
@@ -1324,8 +1295,19 @@ const roomName=r=>{
 
     $('room-subtitle').textContent=
       active?.kind==='group'
-        ?data.members.length+
-          '명이 함께하는 대화'
+        ?(
+          active.id===S.GROUP
+            ?data.members.length+
+              '명이 함께하는 사업단 전체 대화'
+            :(
+              Array.isArray(
+                active.memberIds
+              )
+                ?active.memberIds.length
+                :0
+            )+
+              '명만 참여하는 그룹 대화'
+        )
         :'초대를 수락한 두 사람만 보는 대화';
 
     $('chat-date').value=
@@ -1384,9 +1366,6 @@ const roomName=r=>{
           :''
       );
 
-    /*
-     * replyTo까지 렌더링 키에 포함
-     */
     const key=
       data.self+
       '|'+
@@ -1508,10 +1487,6 @@ const roomName=r=>{
             'message-bubble'
           );
 
-        /*
-         * 답장 메시지라면
-         * 원본 메시지를 말풍선 위에 표시
-         */
         if(m.replyTo){
           const target=
             data.messages.find(
@@ -1629,12 +1604,6 @@ const roomName=r=>{
           )
         );
 
-        /*
-         * 답장 버튼
-         *
-         * 오늘 대화에서는 서버 연결상태와 관계없이
-         * 답장 대상을 선택할 수 있도록 함.
-         */
         const replyButton=
           button(
             '답장',
@@ -1674,9 +1643,7 @@ const roomName=r=>{
         }
 
         main.append(meta);
-
         row.append(main);
-
         list.append(row);
       }
 
@@ -1958,7 +1925,6 @@ const roomName=r=>{
       }
 
       box.append(actions);
-
       requests.append(box);
     }
 
@@ -2111,7 +2077,7 @@ const roomName=r=>{
     return b;
   }
 
-  function render(
+   function render(
     next,
     nextInfo
   ){
@@ -2593,7 +2559,255 @@ const roomName=r=>{
       );
     };
 
-  $('chat-date').onchange=
+  /*
+   * 사용자 지정 그룹대화 버튼.
+   * index.html에 버튼이 없어도 자동으로 만듭니다.
+   */
+  const privateStart=$('private-start');
+
+  let groupStart=$('group-start');
+
+  if(
+    privateStart&&
+    !groupStart
+  ){
+    groupStart=button(
+      '+ 그룹 대화',
+      'soft-button',
+      null
+    );
+
+    groupStart.id='group-start';
+
+    privateStart.insertAdjacentElement(
+      'afterend',
+      groupStart
+    );
+  }
+
+  if(groupStart){
+
+    groupStart.onclick=()=>{
+
+      modal(
+        '그룹 대화 만들기',
+        body=>{
+
+          const form=
+            node(
+              'form',
+              'stack-form'
+            );
+
+          const titleLabel=
+            node(
+              'label',
+              '',
+              '그룹 이름'
+            );
+
+          const titleInput=
+            node(
+              'input',
+              ''
+            );
+
+          titleInput.type='text';
+          titleInput.maxLength=40;
+          titleInput.required=true;
+          titleInput.placeholder=
+            '예: 예산사전협의 연구팀';
+
+          const description=
+            node(
+              'p',
+              'muted',
+              '이 방을 볼 수 있는 사람만 선택하세요. 나 자신은 자동으로 포함됩니다.'
+            );
+
+          const picker=
+            node(
+              'div',
+              'group-member-picker'
+            );
+
+          const selected=
+            new Set();
+
+          for(
+            const m of data.members.filter(
+              m=>m.id!==data.self
+            )
+          ){
+
+            const row=
+              node(
+                'label',
+                'member-row'
+              );
+
+            const checkbox=
+              document.createElement(
+                'input'
+              );
+
+            checkbox.type='checkbox';
+            checkbox.value=m.id;
+
+            checkbox.onchange=()=>{
+
+              if(checkbox.checked){
+                selected.add(
+                  m.id
+                );
+              }else{
+                selected.delete(
+                  m.id
+                );
+              }
+
+            };
+
+            const text=
+              node(
+                'span',
+                'member-info'
+              );
+
+            text.append(
+              node(
+                'strong',
+                '',
+                m.name
+              ),
+              node(
+                'p',
+                '',
+                '그룹에 참여'
+              )
+            );
+
+            row.append(
+              checkbox,
+              avatar(m.id),
+              text
+            );
+
+            picker.append(
+              row
+            );
+          }
+
+          const error=
+            node(
+              'p',
+              'field-error'
+            );
+
+          error.setAttribute(
+            'role',
+            'alert'
+          );
+
+          const submit=
+            button(
+              '그룹 대화 만들기',
+              'primary-button'
+            );
+
+          submit.type='submit';
+
+          form.append(
+            titleLabel,
+            titleInput,
+            description,
+            picker,
+            error,
+            submit
+          );
+
+          form.onsubmit=
+            async event=>{
+
+              event.preventDefault();
+
+              error.textContent='';
+
+              const title=
+                titleInput
+                  .value
+                  .trim();
+
+              const userIds=[
+                ...selected
+              ];
+
+              if(!title){
+
+                error.textContent=
+                  '그룹 이름을 입력해 주세요.';
+
+                titleInput.focus();
+
+                return;
+              }
+
+              if(userIds.length<2){
+
+                error.textContent=
+                  '그룹 대화는 나 외에 2명 이상을 선택해 주세요.';
+
+                return;
+              }
+
+              submit.disabled=true;
+
+              submit.textContent=
+                '그룹 만드는 중...';
+
+              try{
+
+                const result=
+                  await S.createGroup(
+                    title,
+                    userIds
+                  );
+
+                closeModal();
+
+                if(result?.roomId){
+                  await openRoom(
+                    result.roomId
+                  );
+                }
+
+                toast(
+                  title+
+                  ' 그룹 대화를 만들었어요.'
+                );
+
+              }catch(errorObject){
+
+                error.textContent=
+                  errorObject.message||
+                  '그룹을 만들지 못했어요.';
+
+                submit.disabled=false;
+
+                submit.textContent=
+                  '그룹 대화 만들기';
+              }
+            };
+
+          body.append(
+            form
+          );
+        }
+      );
+    };
+  }
+
+   $('chat-date').onchange=
     ()=>{
       boundary=null;
 
@@ -2781,12 +2995,6 @@ const roomName=r=>{
         )+'px';
     };
 
-  /*
-   * 메시지 전송
-   *
-   * 선택한 답장 대상 ID를
-   * storage.js로 넘김
-   */
   $('message-form').onsubmit=
     async e=>{
       e.preventDefault();
@@ -2820,9 +3028,7 @@ const roomName=r=>{
         '';
 
       try{
-        /*
-         * ★ 핵심
-         */
+
         await S.send(
           text,
           replyId
@@ -2858,10 +3064,14 @@ const roomName=r=>{
         }
 
         scrollBottom();
+
       }catch(error){
+
         $('message-error').textContent=
           error.message;
+
       }finally{
+
         sending=false;
         renderChat();
       }
@@ -3088,7 +3298,9 @@ const roomName=r=>{
               toast(
                 '요약을 저장했어요.'
               );
+
             }catch(error){
+
               if(
                 form.isConnected
               ){
@@ -3301,6 +3513,7 @@ const roomName=r=>{
           ){
             e.preventDefault();
             last.focus();
+
           }else if(
             !e.shiftKey&&
             document.activeElement===
