@@ -223,3 +223,128 @@
   g.RTStore=Object.freeze({GROUP,markRead,init,refresh,login,signup,join,logout,view,apply,send,uuid,exportDay,inviteURL,pendingInvite,rememberInvite,setDraft,draft,
     load:()=>copy(state),info:()=>({...status}),subscribe:fn=>{listeners.add(fn);return()=>listeners.delete(fn);}});
 })(window);
+
+async function createGroup(title,userIds){
+
+  if(
+    !session||
+    !sdk||
+    status.status!=='connected'||
+    g.navigator?.onLine===false
+  ){
+    throw new Error(
+      '인터넷 연결 후 다시 시도해 주세요.'
+    );
+  }
+
+
+  title=
+    String(title||'').trim();
+
+
+  if(
+    !title||
+    title.length>40
+  ){
+    throw new Error(
+      '그룹 이름은 1~40자로 입력해 주세요.'
+    );
+  }
+
+
+  const ids=[
+    ...new Set(
+      (userIds||[])
+        .map(String)
+        .filter(Boolean)
+    )
+  ];
+
+
+  if(ids.length<2){
+    throw new Error(
+      '함께할 사람을 2명 이상 선택해 주세요.'
+    );
+  }
+
+
+  const ae=authEpoch;
+  const ve=viewEpoch;
+
+
+  const res=
+    await sdk.rpc(
+      'rt_group_create',
+      {
+        p_title:title,
+        p_user_ids:ids,
+        p_room:room,
+        p_day:day
+      }
+    );
+
+
+  if(res.error){
+    throw wrap(res.error);
+  }
+
+
+  if(ae!==authEpoch){
+    throw new Error(
+      '계정이 바뀌었어요. 현재 계정을 확인해 주세요.'
+    );
+  }
+
+
+  if(ve===viewEpoch){
+
+    accept(
+      res.data.state,
+      ae,
+      ve
+    );
+
+  }else{
+
+    await refresh();
+
+  }
+
+
+  return (
+    res.data.result||
+    {}
+  );
+}
+
+g.RTStore=Object.freeze({
+  GROUP,
+  markRead,
+  init,
+  refresh,
+  login,
+  signup,
+  join,
+  logout,
+  view,
+  apply,
+  createGroup,
+  send,
+  uuid,
+  exportDay,
+  inviteURL,
+  pendingInvite,
+  rememberInvite,
+  setDraft,
+  draft,
+
+  load:()=>copy(state),
+
+  info:()=>({...status}),
+
+  subscribe:fn=>{
+    listeners.add(fn);
+    return()=>listeners.delete(fn);
+  }
+});
+
