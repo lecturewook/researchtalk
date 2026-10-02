@@ -3825,10 +3825,27 @@ body:not([data-workspace-theme="hwp"]) .hwp-document-page .daily-marker::before{
       <div class="xl-letters" aria-hidden="true"><span>J</span></div>
 
       <div class="chat-top">
-        <div class="section-heading">
-          <h1>연구사업단 대화</h1>
-          <button id="private-start" class="soft-button">+ 개인 대화</button>
-        </div>
+ <div class="section-heading">
+  <h1>연구사업단 대화</h1>
+
+  <div class="inline-actions">
+    <button
+      id="private-start"
+      class="soft-button"
+      type="button"
+    >
+      + 개인 대화
+    </button>
+
+    <button
+      id="group-start"
+      class="soft-button"
+      type="button"
+    >
+      + 그룹 대화
+    </button>
+  </div>
+</div>
         <div id="room-list" class="room-list" aria-label="대화방"></div>
       </div>
 
