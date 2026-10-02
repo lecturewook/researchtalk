@@ -27,12 +27,14 @@
     userId:null
   };
 
+
   const copy=v=>
     v==null
       ?v
       :JSON.parse(
         JSON.stringify(v)
       );
+
 
   function get(key){
     try{
@@ -43,6 +45,7 @@
       return null;
     }
   }
+
 
   function put(key,value){
     try{
@@ -57,6 +60,7 @@
     }
   }
 
+
   function remove(key){
     try{
       g.localStorage.removeItem(
@@ -64,6 +68,7 @@
       );
     }catch{}
   }
+
 
   function object(key,fallback){
     try{
@@ -74,6 +79,7 @@
       return fallback;
     }
   }
+
 
   function notify(){
     for(const fn of listeners){
@@ -91,6 +97,7 @@
     }
   }
 
+
   function setStatus(name,message){
     status={
       ...status,
@@ -104,10 +111,13 @@
     notify();
   }
 
+
   function uuid(){
+
     if(g.crypto?.randomUUID){
       return g.crypto.randomUUID();
     }
+
 
     if(!g.crypto?.getRandomValues){
       throw new Error(
@@ -115,13 +125,16 @@
       );
     }
 
+
     const a=
       new Uint8Array(16);
+
 
     g.crypto.getRandomValues(a);
 
     a[6]=(a[6]&15)|64;
     a[8]=(a[8]&63)|128;
+
 
     const h=[
       ...a
@@ -130,6 +143,7 @@
         x.toString(16)
           .padStart(2,'0')
     ).join('');
+
 
     return (
       h.slice(0,8)+'-'+
@@ -140,10 +154,13 @@
     );
   }
 
+
   function errorMessage(e){
+
     if(e?.message==='RT_NOT_MEMBER'){
       return '초대 코드를 입력해 참여해 주세요.';
     }
+
 
     if(
       e?.code==='PGRST202'||
@@ -153,9 +170,11 @@
       return 'researchtalk 저장소 설정이 필요해요. 안내 파일의 SQL 두 개를 실행해 주세요.';
     }
 
+
     if(e?.code==='P0001'){
       return e.message;
     }
+
 
     if(e?.code==='42501'){
       return /[가-힣]/.test(
@@ -165,9 +184,11 @@
         :'이 작업에 접근할 권한이 없어요.';
     }
 
+
     if(e?.code==='23505'){
       return '이미 저장된 항목이에요. 화면을 새로 확인해 주세요.';
     }
+
 
     if(
       [
@@ -183,6 +204,7 @@
       return '입력한 날짜와 내용을 확인해 주세요.';
     }
 
+
     if(
       /invalid login credentials/i.test(
         e?.message||''
@@ -191,6 +213,7 @@
       return '이메일 또는 비밀번호가 맞지 않아요.';
     }
 
+
     if(
       /email not confirmed/i.test(
         e?.message||''
@@ -198,6 +221,7 @@
     ){
       return '이메일의 인증 링크를 누른 뒤 로그인해 주세요.';
     }
+
 
     if(
       /email.*rate|rate.*limit|over_email/i.test(
@@ -209,6 +233,7 @@
       return '인증 메일 발송 한도에 도달했어요. 잠시 후 다시 시도하거나 관리자에게 계정 생성을 요청해 주세요.';
     }
 
+
     if(
       /signups.*not allowed|signup_disabled/i.test(
         (e?.message||'')+
@@ -219,6 +244,7 @@
       return '가입이 꺼져 있어요. 관리자에게 계정 생성을 요청해 주세요.';
     }
 
+
     if(
       /password/i.test(
         e?.message||''
@@ -226,6 +252,7 @@
     ){
       return '비밀번호 조건을 확인해 주세요. 8자 이상으로 입력해 주세요.';
     }
+
 
     if(
       /already registered/i.test(
@@ -235,6 +262,7 @@
       return '이미 가입한 이메일이에요. 로그인해 주세요.';
     }
 
+
     if(
       /email.*invalid|email.*address.*not.*authorized/i.test(
         e?.message||''
@@ -243,6 +271,7 @@
       return '이메일을 확인해 주세요. 메일 발송 설정이 안 됐다면 관리자에게 계정 생성을 요청해 주세요.';
     }
 
+
     if(
       e?.code==='PGRST301'||
       e?.status===401
@@ -250,8 +279,10 @@
       return '로그인이 만료됐어요. 다시 로그인해 주세요.';
     }
 
+
     return '연결하지 못했어요. 인터넷을 확인한 뒤 다시 시도해 주세요.';
   }
+
 
   function wrap(e){
     const x=
@@ -265,7 +296,9 @@
     return x;
   }
 
+
   function cached(){
+
     const c=
       object(
         'cache:'+
@@ -283,7 +316,9 @@
     );
   }
 
+
   function cache(data){
+
     const key=
       'cache:'+
       data.self;
@@ -299,12 +334,15 @@
       '|'+
       data.day;
 
+
     delete all[id];
 
     all[id]=data;
 
+
     const keys=
       Object.keys(all);
+
 
     while(keys.length>12){
       delete all[
@@ -312,13 +350,16 @@
       ];
     }
 
+
     put(
       key,
       JSON.stringify(all)
     );
   }
 
+
   function accept(data,ae,ve){
+
     if(
       ae!==authEpoch||
       ve!==viewEpoch||
@@ -328,6 +369,7 @@
     ){
       return false;
     }
+
 
     if(
       state?.self===data.self&&
@@ -339,22 +381,28 @@
       return false;
     }
 
+
     state={
       ...data,
       loading:false
     };
 
+
     cache(state);
+
 
     setStatus(
       'connected',
       '대화와 일정이 연결됐어요'
     );
 
+
     return true;
   }
 
+
   function stopChannel(){
+
     if(
       channel&&
       sdk
@@ -367,7 +415,9 @@
     }
   }
 
+
   function watch(){
+
     if(
       channel||
       !sdk||
@@ -376,6 +426,7 @@
     ){
       return;
     }
+
 
     channel=
       sdk.channel(
@@ -409,18 +460,23 @@
       );
   }
 
+
   function useSession(value){
+
     const old=
       session?.user.id;
 
     const newId=
       value?.user.id;
 
+
     session=
       value||
       null;
 
+
     if(old!==newId){
+
       authEpoch++;
       viewEpoch++;
 
@@ -433,11 +489,14 @@
       pendingMessages.clear();
     }
 
+
     status.userId=
       newId||
       null;
 
+
     if(!value){
+
       state=null;
 
       setStatus(
@@ -447,7 +506,9 @@
     }
   }
 
+
   function pendingInvite(){
+
     return object(
       'pending-invite',
       {
@@ -457,41 +518,52 @@
     );
   }
 
+
   function rememberInvite(
     code,
     name
   ){
+
     const old=
       pendingInvite();
 
+
     const entry={
+
       code:
         (code||'').trim(),
+
       name:
         (
           name===undefined
             ?old.name
             :name||''
         ).trim()
+
     };
+
 
     put(
       'pending-invite',
       JSON.stringify(entry)
     );
 
+
     return entry;
   }
+
 
   async function join(
     code,
     name
   ){
+
     if(!session){
       throw new Error(
         '먼저 로그인해 주세요.'
       );
     }
+
 
     if(
       !/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i
@@ -504,6 +576,7 @@
       );
     }
 
+
     if(
       !name?.trim()||
       name.trim().length>20
@@ -513,13 +586,16 @@
       );
     }
 
+
     const ae=
       authEpoch;
+
 
     rememberInvite(
       code,
       name
     );
+
 
     const res=
       await sdk.rpc(
@@ -531,24 +607,29 @@
         }
       );
 
+
     if(res.error){
       throw wrap(
         res.error
       );
     }
 
+
     if(ae!==authEpoch){
       return;
     }
+
 
     room=GROUP;
     day=D.today();
 
     viewEpoch++;
 
+
     remove(
       'pending-invite'
     );
+
 
     accept(
       res.data,
@@ -556,12 +637,16 @@
       viewEpoch
     );
 
+
     watch();
+
 
     return copy(state);
   }
 
+
   async function refresh(){
+
     if(
       !sdk||
       !session
@@ -569,26 +654,34 @@
       return;
     }
 
+
     const ae=authEpoch,
           ve=viewEpoch;
+
 
     if(
       flight?.ae===ae&&
       flight?.ve===ve
     ){
+
       dirty=true;
+
       return flight.promise;
     }
+
 
     const current={
       ae,
       ve
     };
 
+
     flight=current;
+
 
     current.promise=
       (async()=>{
+
         try{
 
           if(
@@ -600,6 +693,7 @@
             );
           }
 
+
           const res=
             await sdk.rpc(
               'rt_snapshot',
@@ -609,6 +703,7 @@
               }
             );
 
+
           if(
             ae!==authEpoch||
             ve!==viewEpoch
@@ -616,12 +711,14 @@
             return;
           }
 
+
           if(res.error){
 
             if(
               res.error.message===
               'RT_NOT_MEMBER'
             ){
+
               state=null;
 
               remove(
@@ -639,6 +736,7 @@
               return;
             }
 
+
             if(
               [
                 'PGRST202',
@@ -648,6 +746,7 @@
                 res.error.code
               )
             ){
+
               state=null;
 
               setStatus(
@@ -660,14 +759,13 @@
               return;
             }
 
+
             if(
-              res.error.code===
-                '42501'||
-              res.error.code===
-                'PGRST301'||
-              res.error.status===
-                401
+              res.error.code==='42501'||
+              res.error.code==='PGRST301'||
+              res.error.status===401
             ){
+
               state=null;
 
               remove(
@@ -685,8 +783,10 @@
               return;
             }
 
+
             throw res.error;
           }
+
 
           accept(
             res.data,
@@ -694,7 +794,9 @@
             ve
           );
 
+
           watch();
+
 
         }catch(e){
 
@@ -705,12 +807,14 @@
             return;
           }
 
+
           if(
             !state||
             state.loading
           ){
             state=cached();
           }
+
 
           setStatus(
             'offline',
@@ -719,14 +823,18 @@
               :'연결되지 않았어요. 인터넷을 확인해 주세요'
           );
 
+
         }finally{
 
           if(
             flight===current
           ){
+
             flight=null;
 
+
             if(dirty){
+
               dirty=false;
 
               g.setTimeout(
@@ -738,13 +846,18 @@
             }
           }
         }
+
       })();
+
 
     return current.promise;
   }
 
+
   async function init(){
+
     try{
+
       const fragment=
         new URLSearchParams(
           (
@@ -756,16 +869,19 @@
           )
         );
 
+
       if(
         fragment.has(
           'invite'
         )
       ){
+
         rememberInvite(
           fragment.get(
             'invite'
           )
         );
+
 
         g.history?.replaceState(
           null,
@@ -775,11 +891,13 @@
         );
       }
 
+
       if(
         !cfg.url||
         !cfg.publishableKey||
         !g.supabase
       ){
+
         setStatus(
           'setup',
           '앱의 연결 정보를 확인해 주세요.'
@@ -788,12 +906,15 @@
         return;
       }
 
+
       sdk=
         g.supabase.createClient(
           cfg.url,
           cfg.publishableKey,
           {
+
             auth:{
+
               storageKey:
                 PREFIX+
                 'session:'+
@@ -802,6 +923,7 @@
                 ).hostname,
 
               storage:{
+
                 getItem:k=>{
                   try{
                     return g.localStorage
@@ -831,18 +953,23 @@
                       .removeItem(k);
                   }catch{}
                 }
+
               },
 
               persistSession:true,
               autoRefreshToken:true,
               detectSessionInUrl:true
+
             },
 
+
             global:{
+
               fetch:async(
                 url,
                 options={}
               )=>{
+
                 const control=
                   new AbortController();
 
@@ -853,6 +980,7 @@
                   );
 
                 try{
+
                   return await g.fetch(
                     url,
                     {
@@ -862,26 +990,37 @@
                         control.signal
                     }
                   );
+
                 }finally{
+
                   g.clearTimeout(
                     timer
                   );
+
                 }
+
               }
+
             }
+
           }
         );
+
 
       sdk.auth
         .onAuthStateChange(
           (event,value)=>{
+
             g.setTimeout(
               ()=>{
+
                 const changed=
                   session?.user.id!==
                   value?.user.id;
 
+
                 useSession(value);
+
 
                 if(
                   value&&
@@ -890,46 +1029,60 @@
                     event==='TOKEN_REFRESHED'
                   )
                 ){
+
                   refresh().catch(
                     ()=>{}
                   );
+
                 }
+
               },
               0
             );
+
           }
         );
+
 
       const result=
         await sdk.auth
           .getSession();
 
+
       if(result.error){
         throw result.error;
       }
+
 
       useSession(
         result.data.session
       );
 
+
       if(session){
         await refresh();
       }
 
+
       g.setInterval(
         ()=>{
+
           if(
             g.document?.visibilityState!==
               'hidden'&&
             session
           ){
+
             refresh().catch(
               ()=>{}
             );
+
           }
+
         },
         8000
       );
+
 
       for(
         const event of [
@@ -937,41 +1090,54 @@
           'pageshow'
         ]
       ){
+
         g.addEventListener(
           event,
           ()=>refresh().catch(
             ()=>{}
           )
         );
+
       }
+
 
       g.addEventListener(
         'offline',
         ()=>{
+
           if(session){
+
             setStatus(
               'offline',
               '오프라인 · 입력한 글은 그대로 남아 있어요'
             );
+
           }
+
         }
       );
+
 
       g.document
         ?.addEventListener(
           'visibilitychange',
           ()=>{
+
             if(
               g.document
                 .visibilityState===
               'visible'
             ){
+
               refresh().catch(
                 ()=>{}
               );
+
             }
+
           }
         );
+
 
     }catch(e){
 
@@ -983,15 +1149,18 @@
     }
   }
 
+
   async function login(
     email,
     password
   ){
+
     if(!sdk){
       throw new Error(
         '앱의 연결 설정을 확인해 주세요.'
       );
     }
+
 
     const res=
       await sdk.auth
@@ -1001,36 +1170,45 @@
           password
         });
 
+
     if(res.error){
       throw wrap(
         res.error
       );
     }
 
+
     useSession(
       res.data.session
     );
 
+
     await refresh();
+
 
     const p=
       pendingInvite();
+
 
     if(
       status.status==='join'&&
       p.code&&
       p.name
     ){
+
       await join(
         p.code,
         p.name
       );
+
     }
+
 
     return {
       ...status
     };
   }
+
 
   async function signup(
     email,
@@ -1038,11 +1216,13 @@
     name,
     code
   ){
+
     if(!sdk){
       throw new Error(
         '앱의 연결 설정을 확인해 주세요.'
       );
     }
+
 
     if(
       !name.trim()||
@@ -1053,18 +1233,19 @@
       );
     }
 
-    if(
-      password.length<8
-    ){
+
+    if(password.length<8){
       throw new Error(
         '비밀번호를 8자 이상 입력해 주세요.'
       );
     }
 
+
     rememberInvite(
       code,
       name
     );
+
 
     const redirect=
       new URL(
@@ -1072,14 +1253,17 @@
         g.location.href
       );
 
+
     redirect.hash=
       'invite='+
       encodeURIComponent(
         code
       );
 
+
     const res=
       await sdk.auth.signUp({
+
         email:
           email.trim(),
 
@@ -1089,7 +1273,9 @@
           emailRedirectTo:
             redirect.href
         }
+
       });
+
 
     if(res.error){
       throw wrap(
@@ -1097,35 +1283,46 @@
       );
     }
 
+
     if(res.data.session){
+
       useSession(
         res.data.session
       );
+
 
       await join(
         code,
         name
       );
 
+
       return {
         confirmed:true
       };
+
     }
+
 
     return {
       confirmed:false
     };
   }
 
+
   async function logout(){
+
     const id=
       session?.user.id;
 
+
     if(sdk){
+
       const res=
         await sdk.auth.signOut({
           scope:'local'
         });
+
 
       if(res.error){
         throw wrap(
@@ -1134,7 +1331,9 @@
       }
     }
 
+
     if(id){
+
       remove(
         'cache:'+id
       );
@@ -1142,19 +1341,24 @@
       remove(
         'drafts:'+id
       );
+
     }
+
 
     remove(
       'pending-invite'
     );
 
+
     useSession(null);
   }
+
 
   async function view(
     nextRoom,
     nextDay
   ){
+
     if(
       !D.parse(
         nextDay
@@ -1165,18 +1369,23 @@
       );
     }
 
+
     if(
       room===nextRoom&&
       day===nextDay
     ){
+
       await refresh();
+
       return;
     }
+
 
     room=nextRoom;
     day=nextDay;
 
     viewEpoch++;
+
 
     state=
       state
@@ -1190,15 +1399,19 @@
         }
         :null;
 
+
     notify();
+
 
     await refresh();
   }
+
 
   async function apply(
     action,
     data
   ){
+
     if(
       !session||
       !sdk||
@@ -1212,8 +1425,10 @@
       );
     }
 
+
     const ae=authEpoch,
           ve=viewEpoch;
+
 
     const res=
       await sdk.rpc(
@@ -1226,11 +1441,13 @@
         }
       );
 
+
     if(res.error){
       throw wrap(
         res.error
       );
     }
+
 
     if(
       ae!==authEpoch
@@ -1240,17 +1457,23 @@
       );
     }
 
+
     if(
       ve===viewEpoch
     ){
+
       accept(
         res.data.state,
         ae,
         ve
       );
+
     }else{
+
       await refresh();
+
     }
+
 
     return (
       res.data.result||
@@ -1258,7 +1481,9 @@
     );
   }
 
+
   async function markRead(ids){
+
     if(
       !session||
       status.status!==
@@ -1268,8 +1493,10 @@
       return;
     }
 
+
     const ae=
       authEpoch;
+
 
     const res=
       await sdk.rpc(
@@ -1283,6 +1510,7 @@
         }
       );
 
+
     if(
       res.error?.code===
       'PGRST202'
@@ -1292,11 +1520,13 @@
       );
     }
 
+
     if(res.error){
       throw wrap(
         res.error
       );
     }
+
 
     if(
       ae===authEpoch
@@ -1305,15 +1535,19 @@
     }
   }
 
+
   function setDraft(
     roomId,
     text
   ){
+
     if(!session)return;
+
 
     const key=
       'drafts:'+
       session.user.id;
+
 
     const a=
       object(
@@ -1321,11 +1555,17 @@
         {}
       );
 
+
     if(text){
+
       a[roomId]=text;
+
     }else{
+
       delete a[roomId];
+
     }
+
 
     put(
       key,
@@ -1333,7 +1573,9 @@
     );
   }
 
+
   function draft(roomId){
+
     return session
       ?object(
         'drafts:'+
@@ -1343,10 +1585,12 @@
       :'';
   }
 
+
   async function send(
     text,
     replyTo=null
   ){
+
     if(
       day!==D.today()
     ){
@@ -1355,8 +1599,10 @@
       );
     }
 
+
     text=
       text.trim();
+
 
     if(
       !text||
@@ -1367,9 +1613,11 @@
       );
     }
 
+
     replyTo=
       replyTo||
       null;
+
 
     const k=
       session?.user.id+
@@ -1378,23 +1626,33 @@
       '|'+
       day;
 
+
     let request=
       pendingMessages.get(k);
+
 
     if(
       !request||
       request.text!==text||
       request.replyTo!==replyTo
     ){
+
       const now=
         new Date();
 
+
       request={
+
         id:uuid(),
+
         roomId:room,
+
         day,
+
         text,
+
         replyTo,
+
         time:
           String(
             now.getHours()
@@ -1409,7 +1667,9 @@
             2,
             '0'
           )
+
       };
+
 
       pendingMessages.set(
         k,
@@ -1417,114 +1677,26 @@
       );
     }
 
+
     await apply(
       'message.add',
       request
     );
 
+
     pendingMessages.delete(
       k
     );
 
+
     return request;
   }
+
 
   async function createGroup(
     title,
     userIds
   ){
-    if(
-      !session||
-      !sdk||
-      status.status!==
-        'connected'||
-      g.navigator?.onLine===
-        false
-    ){
-      throw new Error(
-        '인터넷 연결 후 다시 시도해 주세요.'
-      );
-    }
-
-    title=
-      String(
-        title||''
-      ).trim();
-
-    if(
-      !title||
-      title.length>40
-    ){
-      throw new Error(
-        '그룹 이름은 1~40자로 입력해 주세요.'
-      );
-    }
-
-    const ids=[
-      ...new Set(
-        (userIds||[])
-          .map(String)
-          .filter(Boolean)
-      )
-    ];
-
-    if(ids.length<2){
-      throw new Error(
-        '함께할 사람을 2명 이상 선택해 주세요.'
-      );
-    }
-
-    const ae=authEpoch,
-          ve=viewEpoch;
-
-    const res=
-      await sdk.rpc(
-        'rt_group_create',
-        {
-          p_title:title,
-          p_user_ids:ids,
-          p_room:room,
-          p_day:day
-        }
-      );
-
-    if(res.error){
-      throw wrap(
-        res.error
-      );
-    }
-
-    if(
-      ae!==authEpoch
-    ){
-      throw new Error(
-        '계정이 바뀌었어요. 현재 계정을 확인해 주세요.'
-      );
-    }
-
-    if(
-      ve===viewEpoch
-    ){
-      accept(
-        res.data.state,
-        ae,
-        ve
-      );
-    }else{
-      await refresh();
-    }
-
-    return (
-      res.data.result||
-      {}
-    );
-  }
-
-  /* =========================================================
-     지정 멤버 그룹 대화 생성
-     ========================================================= */
-
-  async function createGroup(title,userIds){
 
     if(
       !session||
@@ -1537,8 +1709,10 @@
       );
     }
 
+
     title=
       String(title||'').trim();
+
 
     if(
       !title||
@@ -1549,6 +1723,7 @@
       );
     }
 
+
     const ids=[
       ...new Set(
         (userIds||[])
@@ -1557,18 +1732,17 @@
       )
     ];
 
-    /*
-      나 자신은 Supabase에서 자동 포함되므로
-      다른 참여자 2명 이상 선택
-    */
+
     if(ids.length<2){
       throw new Error(
         '함께할 사람을 2명 이상 선택해 주세요.'
       );
     }
 
+
     const ae=authEpoch;
     const ve=viewEpoch;
+
 
     const res=
       await sdk.rpc(
@@ -1581,15 +1755,18 @@
         }
       );
 
+
     if(res.error){
       throw wrap(res.error);
     }
+
 
     if(ae!==authEpoch){
       throw new Error(
         '계정이 바뀌었어요. 현재 계정을 확인해 주세요.'
       );
     }
+
 
     if(ve===viewEpoch){
 
@@ -1605,6 +1782,7 @@
 
     }
 
+
     return (
       res.data.result||
       {}
@@ -1612,9 +1790,341 @@
   }
 
 
-  /* =========================================================
-     대화 파일 저장
-     ========================================================= */
+  async function renameGroup(
+    roomId,
+    title
+  ){
+
+    if(
+      !session||
+      !sdk||
+      status.status!=='connected'||
+      g.navigator?.onLine===false
+    ){
+      throw new Error(
+        '인터넷 연결 후 다시 시도해 주세요.'
+      );
+    }
+
+
+    title=
+      String(title||'').trim();
+
+
+    if(
+      !title||
+      title.length>40
+    ){
+      throw new Error(
+        '그룹 이름은 1~40자로 입력해 주세요.'
+      );
+    }
+
+
+    const ae=authEpoch;
+    const ve=viewEpoch;
+
+
+    const res=
+      await sdk.rpc(
+        'rt_group_rename',
+        {
+          p_group:roomId,
+          p_title:title,
+          p_room:room,
+          p_day:day
+        }
+      );
+
+
+    if(res.error){
+      throw wrap(res.error);
+    }
+
+
+    if(ae!==authEpoch){
+      throw new Error(
+        '계정이 바뀌었어요. 현재 계정을 확인해 주세요.'
+      );
+    }
+
+
+    if(ve===viewEpoch){
+
+      accept(
+        res.data.state,
+        ae,
+        ve
+      );
+
+    }else{
+
+      await refresh();
+
+    }
+
+
+    return (
+      res.data.result||
+      {}
+    );
+  }
+
+
+  async function addGroupMembers(
+    roomId,
+    userIds
+  ){
+
+    if(
+      !session||
+      !sdk||
+      status.status!=='connected'||
+      g.navigator?.onLine===false
+    ){
+      throw new Error(
+        '인터넷 연결 후 다시 시도해 주세요.'
+      );
+    }
+
+
+    const ids=[
+      ...new Set(
+        (userIds||[])
+          .map(String)
+          .filter(Boolean)
+      )
+    ];
+
+
+    if(!ids.length){
+      throw new Error(
+        '추가할 사람을 선택해 주세요.'
+      );
+    }
+
+
+    const ae=authEpoch;
+    const ve=viewEpoch;
+
+
+    const res=
+      await sdk.rpc(
+        'rt_group_add_members',
+        {
+          p_group:roomId,
+          p_user_ids:ids,
+          p_room:room,
+          p_day:day
+        }
+      );
+
+
+    if(res.error){
+      throw wrap(res.error);
+    }
+
+
+    if(ae!==authEpoch){
+      throw new Error(
+        '계정이 바뀌었어요. 현재 계정을 확인해 주세요.'
+      );
+    }
+
+
+    if(ve===viewEpoch){
+
+      accept(
+        res.data.state,
+        ae,
+        ve
+      );
+
+    }else{
+
+      await refresh();
+
+    }
+
+
+    return (
+      res.data.result||
+      {}
+    );
+  }
+
+
+  async function deleteGroup(roomId){
+
+    if(
+      !session||
+      !sdk||
+      status.status!=='connected'||
+      g.navigator?.onLine===false
+    ){
+      throw new Error(
+        '인터넷 연결 후 다시 시도해 주세요.'
+      );
+    }
+
+
+    if(
+      !roomId||
+      roomId===GROUP
+    ){
+      throw new Error(
+        '사업단 전체 대화방은 삭제할 수 없어요.'
+      );
+    }
+
+
+    const ae=
+      authEpoch;
+
+
+    const res=
+      await sdk.rpc(
+        'rt_group_delete',
+        {
+          p_group:roomId,
+          p_day:D.today()
+        }
+      );
+
+
+    if(res.error){
+      throw wrap(res.error);
+    }
+
+
+    if(ae!==authEpoch){
+      throw new Error(
+        '계정이 바뀌었어요. 현재 계정을 확인해 주세요.'
+      );
+    }
+
+
+    setDraft(
+      roomId,
+      ''
+    );
+
+
+    room=GROUP;
+    day=D.today();
+
+    viewEpoch++;
+
+
+    if(
+      res.data?.state
+    ){
+
+      accept(
+        res.data.state,
+        ae,
+        viewEpoch
+      );
+
+    }else{
+
+      await refresh();
+
+    }
+
+
+    return (
+      res.data?.result||
+      {}
+    );
+  }
+
+
+  async function leaveGroup(roomId){
+
+    if(
+      !session||
+      !sdk||
+      status.status!=='connected'||
+      g.navigator?.onLine===false
+    ){
+      throw new Error(
+        '인터넷 연결 후 다시 시도해 주세요.'
+      );
+    }
+
+
+    if(
+      !roomId||
+      roomId===GROUP
+    ){
+      throw new Error(
+        '사업단 전체 대화방에서는 나갈 수 없어요.'
+      );
+    }
+
+
+    const ae=
+      authEpoch;
+
+
+    const res=
+      await sdk.rpc(
+        'rt_group_leave',
+        {
+          p_group:roomId,
+          p_day:D.today()
+        }
+      );
+
+
+    if(res.error){
+      throw wrap(res.error);
+    }
+
+
+    if(ae!==authEpoch){
+      throw new Error(
+        '계정이 바뀌었어요. 현재 계정을 확인해 주세요.'
+      );
+    }
+
+
+    setDraft(
+      roomId,
+      ''
+    );
+
+
+    room=GROUP;
+    day=D.today();
+
+    viewEpoch++;
+
+
+    if(
+      res.data?.state
+    ){
+
+      accept(
+        res.data.state,
+        ae,
+        viewEpoch
+      );
+
+    }else{
+
+      await refresh();
+
+    }
+
+
+    return (
+      res.data?.result||
+      {}
+    );
+  }
+
 
   function exportDay(){
 
@@ -1623,6 +2133,7 @@
         '이 날짜에는 저장할 대화가 없어요.'
       );
     }
+
 
     const names=
       Object.fromEntries(
@@ -1634,33 +2145,24 @@
         )
       );
 
+
     const r=
       state.rooms.find(
         r=>r.id===room
       );
 
+
     let title='대화';
 
 
-    /*
-      그룹 대화
-    */
     if(r?.kind==='group'){
 
-      /*
-        기존 사업단 전체방
-      */
       if(r.id===GROUP){
 
         title=
           '우리 모두';
 
-      }
-
-      /*
-        지정 멤버 그룹방
-      */
-      else{
+      }else{
 
         title=
           r.title||
@@ -1668,18 +2170,13 @@
 
       }
 
-    }
-
-
-    /*
-      개인 대화
-    */
-    else if(r?.kind==='direct'){
+    }else if(r?.kind==='direct'){
 
       const otherId=
         r.a===state.self
           ?r.b
           :r.a;
+
 
       title=
         (
@@ -1767,17 +2264,15 @@
         g.location.href
       );
 
+
     url.hash=
       'invite='+
       code;
 
+
     return url.href;
   }
 
-
-  /* =========================================================
-     브라우저에 공개되는 ResearchTalk 저장소 API
-     ========================================================= */
 
   g.RTStore=Object.freeze({
 
@@ -1801,8 +2296,15 @@
 
     apply,
 
-    /* ★ 새 그룹 대화 기능 */
     createGroup,
+
+    renameGroup,
+
+    addGroupMembers,
+
+    deleteGroup,
+
+    leaveGroup,
 
     send,
 
