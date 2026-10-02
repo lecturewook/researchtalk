@@ -1520,10 +1520,105 @@
     );
   }
 
-  function exportDay(){
+  /* =========================================================
+     지정 멤버 그룹 대화 생성
+     ========================================================= */
+
+  async function createGroup(title,userIds){
+
     if(
-      !state?.messages.length
+      !session||
+      !sdk||
+      status.status!=='connected'||
+      g.navigator?.onLine===false
     ){
+      throw new Error(
+        '인터넷 연결 후 다시 시도해 주세요.'
+      );
+    }
+
+    title=
+      String(title||'').trim();
+
+    if(
+      !title||
+      title.length>40
+    ){
+      throw new Error(
+        '그룹 이름은 1~40자로 입력해 주세요.'
+      );
+    }
+
+    const ids=[
+      ...new Set(
+        (userIds||[])
+          .map(String)
+          .filter(Boolean)
+      )
+    ];
+
+    /*
+      나 자신은 Supabase에서 자동 포함되므로
+      다른 참여자 2명 이상 선택
+    */
+    if(ids.length<2){
+      throw new Error(
+        '함께할 사람을 2명 이상 선택해 주세요.'
+      );
+    }
+
+    const ae=authEpoch;
+    const ve=viewEpoch;
+
+    const res=
+      await sdk.rpc(
+        'rt_group_create',
+        {
+          p_title:title,
+          p_user_ids:ids,
+          p_room:room,
+          p_day:day
+        }
+      );
+
+    if(res.error){
+      throw wrap(res.error);
+    }
+
+    if(ae!==authEpoch){
+      throw new Error(
+        '계정이 바뀌었어요. 현재 계정을 확인해 주세요.'
+      );
+    }
+
+    if(ve===viewEpoch){
+
+      accept(
+        res.data.state,
+        ae,
+        ve
+      );
+
+    }else{
+
+      await refresh();
+
+    }
+
+    return (
+      res.data.result||
+      {}
+    );
+  }
+
+
+  /* =========================================================
+     대화 파일 저장
+     ========================================================= */
+
+  function exportDay(){
+
+    if(!state?.messages.length){
       throw new Error(
         '이 날짜에는 저장할 대화가 없어요.'
       );
@@ -1546,19 +1641,40 @@
 
     let title='대화';
 
+
+    /*
+      그룹 대화
+    */
     if(r?.kind==='group'){
 
+      /*
+        기존 사업단 전체방
+      */
       if(r.id===GROUP){
-        title='우리 모두';
-      }else{
+
+        title=
+          '우리 모두';
+
+      }
+
+      /*
+        지정 멤버 그룹방
+      */
+      else{
+
         title=
           r.title||
           '그룹 대화';
+
       }
 
-    }else if(
-      r?.kind==='direct'
-    ){
+    }
+
+
+    /*
+      개인 대화
+    */
+    else if(r?.kind==='direct'){
 
       const otherId=
         r.a===state.self
@@ -1571,11 +1687,13 @@
           '참여자'
         )+
         '님과 개인 대화';
+
     }
 
+
     const lines=[
-      'researchtalk · '+
-      title,
+
+      'researchtalk · '+title,
 
       D.label(day),
 
@@ -1594,23 +1712,28 @@
           m.text+
           '\n'
       )
+
     ];
+
 
     const d=
       state.days.find(
         x=>x.day===day
       );
 
+
     if(
       d?.summary&&
-      d.summaryRevision===
-        d.revision
+      d.summaryRevision===d.revision
     ){
+
       lines.push(
         '이날의 이야기',
         d.summary
       );
+
     }
+
 
     const roomType=
       r?.kind==='direct'
@@ -1619,7 +1742,9 @@
           ?'전체'
           :'그룹';
 
+
     return {
+
       name:
         'researchtalk-'+
         day+
@@ -1629,10 +1754,13 @@
 
       text:
         lines.join('\n')
+
     };
   }
 
+
   function inviteURL(code){
+
     const url=
       new URL(
         './',
@@ -1646,41 +1774,73 @@
     return url.href;
   }
 
+
+  /* =========================================================
+     브라우저에 공개되는 ResearchTalk 저장소 API
+     ========================================================= */
+
   g.RTStore=Object.freeze({
+
     GROUP,
+
     markRead,
+
     init,
+
     refresh,
+
     login,
+
     signup,
+
     join,
+
     logout,
+
     view,
+
     apply,
+
+    /* ★ 새 그룹 대화 기능 */
     createGroup,
+
     send,
+
     uuid,
+
     exportDay,
+
     inviteURL,
+
     pendingInvite,
+
     rememberInvite,
+
     setDraft,
+
     draft,
+
 
     load:
       ()=>copy(state),
 
+
     info:
       ()=>({...status}),
 
+
     subscribe:
       fn=>{
+
         listeners.add(fn);
 
         return()=>{
           listeners.delete(fn);
         };
+
       }
+
   });
+
 
 })(window);
