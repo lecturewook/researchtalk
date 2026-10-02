@@ -26,6 +26,9 @@
 
   let replyTarget=null;
 
+  let groupManage=null;
+  let groupLeave=null;
+
   const colors=[
     '#e9e2f6',
     '#deeee7',
@@ -236,14 +239,20 @@
           ()=>action(
             async()=>{
               await fn();
+
               closeModal();
-              toast('삭제했어요.');
+
+              toast(
+                '삭제했어요.'
+              );
             },
             b
           )
         );
 
-        b.style.marginTop='20px';
+        b.style.marginTop=
+          '20px';
+
         body.append(b);
       }
     );
@@ -880,7 +889,7 @@
     }
   }
 
-  function scrollBottom(){
+   function scrollBottom(){
     const sc=
       $('chat-scroll');
 
@@ -982,7 +991,7 @@
       });
   }
 
-   function scheduleRead(){
+  function scheduleRead(){
     clearTimeout(
       readTimer
     );
@@ -1309,6 +1318,23 @@
               '명만 참여하는 그룹 대화'
         )
         :'초대를 수락한 두 사람만 보는 대화';
+
+    if(groupManage){
+      groupManage.hidden=
+        !(
+          active?.kind==='group'&&
+          active.id!==S.GROUP&&
+          active.createdBy===data.self
+        );
+    }
+
+    if(groupLeave){
+      groupLeave.hidden=
+        !(
+          active?.kind==='group'&&
+          active.id!==S.GROUP
+        );
+    }
 
     $('chat-date').value=
       data.day;
@@ -2077,7 +2103,7 @@
     return b;
   }
 
-   function render(
+  function render(
     next,
     nextInfo
   ){
@@ -2421,7 +2447,7 @@
       ()=>S.refresh()
     );
 
-  $('month-prev').onclick=
+   $('month-prev').onclick=
     ()=>{
       calendarMonth=
         D.shift(
@@ -2559,10 +2585,6 @@
       );
     };
 
-  /*
-   * 사용자 지정 그룹대화 버튼.
-   * index.html에 버튼이 없어도 자동으로 만듭니다.
-   */
   const privateStart=$('private-start');
 
   let groupStart=$('group-start');
@@ -2591,6 +2613,7 @@
 
       modal(
         '그룹 대화 만들기',
+
         body=>{
 
           const form=
@@ -2657,13 +2680,17 @@
             checkbox.onchange=()=>{
 
               if(checkbox.checked){
+
                 selected.add(
                   m.id
                 );
+
               }else{
+
                 selected.delete(
                   m.id
                 );
+
               }
 
             };
@@ -2776,9 +2803,11 @@
                 closeModal();
 
                 if(result?.roomId){
+
                   await openRoom(
                     result.roomId
                   );
+
                 }
 
                 toast(
@@ -2796,15 +2825,706 @@
 
                 submit.textContent=
                   '그룹 대화 만들기';
+
               }
+
             };
 
           body.append(
             form
           );
+
         }
       );
+
     };
+
+  }
+
+  if(
+    !groupManage&&
+    $('history-open')
+  ){
+    groupManage=button(
+      '그룹 관리',
+      'text-button',
+      null
+    );
+
+    groupManage.id='group-manage';
+    groupManage.hidden=true;
+
+    $('history-open')
+      .insertAdjacentElement(
+        'beforebegin',
+        groupManage
+      );
+  }
+
+  if(
+    !groupLeave&&
+    $('history-open')
+  ){
+    groupLeave=button(
+      '그룹에서 나가기',
+      'text-button',
+      null
+    );
+
+    groupLeave.id='group-leave';
+    groupLeave.hidden=true;
+
+    $('history-open')
+      .insertAdjacentElement(
+        'beforebegin',
+        groupLeave
+      );
+  }
+
+  function leaveCurrentGroup(){
+
+    const active=
+      roomInfo(
+        data?.roomId
+      );
+
+    if(
+      !active||
+      active.kind!=='group'||
+      active.id===S.GROUP
+    ){
+      toast(
+        '사용자 지정 그룹방에서만 나갈 수 있어요.'
+      );
+
+      return;
+    }
+
+    const isCreator=
+      active.createdBy===
+      data.self;
+
+    modal(
+      '그룹에서 나갈까요?',
+
+      body=>{
+
+        body.append(
+          node(
+            'p',
+            '',
+            '‘'+
+            roomName(active)+
+            '’ 그룹에서 나갑니다.'
+          )
+        );
+
+        if(isCreator){
+
+          body.append(
+            node(
+              'p',
+              'muted',
+              '방을 만든 사람이 나가면 남아 있는 참여자 중 가장 먼저 들어온 사람에게 그룹 관리 권한이 자동으로 넘어갑니다.'
+            )
+          );
+
+        }else{
+
+          body.append(
+            node(
+              'p',
+              'muted',
+              '나간 뒤에는 이 그룹의 이전 대화와 새 메시지를 볼 수 없고, 푸시 알림도 더 이상 받지 않아요.'
+            )
+          );
+
+        }
+
+        const leaveButton=
+          button(
+            '그룹에서 나가기',
+            'danger-button',
+            ()=>action(
+              async()=>{
+
+                await S.leaveGroup(
+                  active.id
+                );
+
+                replyTarget=null;
+                renderReplyBar();
+
+                closeModal();
+
+                toast(
+                  '그룹에서 나왔어요.'
+                );
+
+              },
+              leaveButton
+            )
+          );
+
+        leaveButton.style.marginTop=
+          '18px';
+
+        body.append(
+          leaveButton
+        );
+
+      }
+    );
+  }
+
+  function openGroupManage(){
+
+    const active=
+      roomInfo(
+        data?.roomId
+      );
+
+    if(
+      !active||
+      active.kind!=='group'||
+      active.id===S.GROUP
+    ){
+      toast(
+        '사용자 지정 그룹방에서만 관리할 수 있어요.'
+      );
+
+      return;
+    }
+
+    if(
+      active.createdBy!==
+      data.self
+    ){
+      toast(
+        '이 그룹을 만든 사람만 관리할 수 있어요.'
+      );
+
+      return;
+    }
+
+    modal(
+      '그룹 대화 관리',
+
+      body=>{
+
+        const memberIds=
+          new Set(
+            Array.isArray(
+              active.memberIds
+            )
+              ?active.memberIds
+              :[]
+          );
+
+        const currentTitle=
+          node(
+            'h3',
+            '',
+            '현재 참여자'
+          );
+
+        const currentList=
+          node(
+            'div',
+            'group-member-picker'
+          );
+
+        const currentMembers=
+          data.members.filter(
+            m=>
+              memberIds.has(
+                m.id
+              )
+          );
+
+        for(
+          const m of
+          currentMembers
+        ){
+
+          const row=
+            node(
+              'div',
+              'member-row'
+            );
+
+          const text=
+            node(
+              'span',
+              'member-info'
+            );
+
+          text.append(
+            node(
+              'strong',
+              '',
+              m.name
+            ),
+            node(
+              'p',
+              '',
+              m.id===data.self
+                ?'나 · 방 만든 사람'
+                :'참여 중'
+            )
+          );
+
+          row.append(
+            avatar(m.id),
+            text
+          );
+
+          currentList.append(
+            row
+          );
+        }
+
+        body.append(
+          currentTitle,
+          currentList
+        );
+
+        const renameTitle=
+          node(
+            'h3',
+            '',
+            '방 이름 바꾸기'
+          );
+
+        renameTitle.style.marginTop=
+          '22px';
+
+        const renameForm=
+          node(
+            'form',
+            'stack-form'
+          );
+
+        const renameLabel=
+          node(
+            'label',
+            '',
+            '그룹 이름'
+          );
+
+        const renameInput=
+          document.createElement(
+            'input'
+          );
+
+        renameInput.type='text';
+        renameInput.maxLength=40;
+        renameInput.required=true;
+        renameInput.value=
+          active.title||
+          '그룹 대화';
+
+        const renameError=
+          node(
+            'p',
+            'field-error'
+          );
+
+        renameError.setAttribute(
+          'role',
+          'alert'
+        );
+
+        const renameButton=
+          button(
+            '이름 저장',
+            'soft-button',
+            null
+          );
+
+        renameButton.type='submit';
+
+        renameForm.append(
+          renameLabel,
+          renameInput,
+          renameError,
+          renameButton
+        );
+
+        renameForm.onsubmit=
+          async event=>{
+
+            event.preventDefault();
+
+            renameError.textContent='';
+
+            const nextTitle=
+              renameInput
+                .value
+                .trim();
+
+            if(!nextTitle){
+
+              renameError.textContent=
+                '그룹 이름을 입력해 주세요.';
+
+              return;
+            }
+
+            renameButton.disabled=
+              true;
+
+            renameButton.textContent=
+              '저장 중...';
+
+            try{
+
+              await S.renameGroup(
+                active.id,
+                nextTitle
+              );
+
+              closeModal();
+
+              toast(
+                '그룹 이름을 바꿨어요.'
+              );
+
+            }catch(error){
+
+              renameError.textContent=
+                error.message||
+                '그룹 이름을 바꾸지 못했어요.';
+
+              renameButton.disabled=
+                false;
+
+              renameButton.textContent=
+                '이름 저장';
+
+            }
+
+          };
+
+        body.append(
+          renameTitle,
+          renameForm
+        );
+
+        const available=
+          data.members.filter(
+            m=>
+              !memberIds.has(
+                m.id
+              )
+          );
+
+        const addTitle=
+          node(
+            'h3',
+            '',
+            '참여자 추가'
+          );
+
+        addTitle.style.marginTop=
+          '22px';
+
+        body.append(
+          addTitle
+        );
+
+        if(!available.length){
+
+          body.append(
+            node(
+              'p',
+              'muted',
+              '추가할 수 있는 다른 참여자가 없어요.'
+            )
+          );
+
+        }else{
+
+          const addForm=
+            node(
+              'form',
+              'stack-form'
+            );
+
+          const picker=
+            node(
+              'div',
+              'group-member-picker'
+            );
+
+          const selected=
+            new Set();
+
+          for(
+            const m of
+            available
+          ){
+
+            const row=
+              node(
+                'label',
+                'member-row'
+              );
+
+            const checkbox=
+              document.createElement(
+                'input'
+              );
+
+            checkbox.type=
+              'checkbox';
+
+            checkbox.value=
+              m.id;
+
+            checkbox.onchange=
+              ()=>{
+
+                if(
+                  checkbox.checked
+                ){
+
+                  selected.add(
+                    m.id
+                  );
+
+                }else{
+
+                  selected.delete(
+                    m.id
+                  );
+
+                }
+
+              };
+
+            const text=
+              node(
+                'span',
+                'member-info'
+              );
+
+            text.append(
+              node(
+                'strong',
+                '',
+                m.name
+              ),
+              node(
+                'p',
+                '',
+                '이 그룹에 추가'
+              )
+            );
+
+            row.append(
+              checkbox,
+              avatar(m.id),
+              text
+            );
+
+            picker.append(
+              row
+            );
+          }
+
+          const addError=
+            node(
+              'p',
+              'field-error'
+            );
+
+          addError.setAttribute(
+            'role',
+            'alert'
+          );
+
+          const addButton=
+            button(
+              '선택한 사람 추가',
+              'soft-button',
+              null
+            );
+
+          addButton.type=
+            'submit';
+
+          addForm.append(
+            picker,
+            addError,
+            addButton
+          );
+
+          addForm.onsubmit=
+            async event=>{
+
+              event.preventDefault();
+
+              addError.textContent='';
+
+              const userIds=[
+                ...selected
+              ];
+
+              if(
+                !userIds.length
+              ){
+
+                addError.textContent=
+                  '추가할 사람을 선택해 주세요.';
+
+                return;
+              }
+
+              addButton.disabled=
+                true;
+
+              addButton.textContent=
+                '추가 중...';
+
+              try{
+
+                await S.addGroupMembers(
+                  active.id,
+                  userIds
+                );
+
+                closeModal();
+
+                toast(
+                  userIds.length+
+                  '명을 그룹에 추가했어요.'
+                );
+
+              }catch(error){
+
+                addError.textContent=
+                  error.message||
+                  '참여자를 추가하지 못했어요.';
+
+                addButton.disabled=
+                  false;
+
+                addButton.textContent=
+                  '선택한 사람 추가';
+
+              }
+
+            };
+
+          body.append(
+            addForm
+          );
+        }
+
+        const dangerTitle=
+          node(
+            'h3',
+            '',
+            '그룹방 삭제'
+          );
+
+        dangerTitle.style.marginTop=
+          '26px';
+
+        const dangerText=
+          node(
+            'p',
+            'muted',
+            '삭제하면 이 그룹의 메시지와 날짜별 기록이 모두 사라지고 되돌릴 수 없어요.'
+          );
+
+        const deleteButton=
+          button(
+            '이 그룹방 삭제',
+            'danger-button',
+            ()=>{
+
+              const roomId=
+                active.id;
+
+              const roomTitle=
+                active.title||
+                '그룹 대화';
+
+              modal(
+                '그룹방을 삭제할까요?',
+
+                confirmBody=>{
+
+                  confirmBody.append(
+                    node(
+                      'p',
+                      '',
+                      '‘'+
+                      roomTitle+
+                      '’ 방과 이 방의 대화 기록을 모두 삭제합니다.'
+                    ),
+                    node(
+                      'p',
+                      'muted',
+                      '이 작업은 되돌릴 수 없어요.'
+                    )
+                  );
+
+                  const confirmDelete=
+                    button(
+                      '삭제',
+                      'danger-button',
+                      ()=>action(
+                        async()=>{
+
+                          await S.deleteGroup(
+                            roomId
+                          );
+
+                          replyTarget=null;
+                          renderReplyBar();
+
+                          closeModal();
+
+                          toast(
+                            '그룹방을 삭제했어요.'
+                          );
+
+                        },
+                        confirmDelete
+                      )
+                    );
+
+                  confirmDelete.style.marginTop=
+                    '18px';
+
+                  confirmBody.append(
+                    confirmDelete
+                  );
+                }
+              );
+            }
+          );
+
+        body.append(
+          dangerTitle,
+          dangerText,
+          deleteButton
+        );
+      }
+    );
+  }
+
+  if(groupManage){
+    groupManage.onclick=
+      openGroupManage;
+  }
+
+  if(groupLeave){
+    groupLeave.onclick=
+      leaveCurrentGroup;
   }
 
    $('chat-date').onchange=
@@ -3074,6 +3794,7 @@
 
         sending=false;
         renderChat();
+
       }
     };
 
@@ -3312,12 +4033,13 @@
                 b.textContent=
                   '다시 요약';
               }
+
             }
           };
       }
     );
 
-  $('invite-create').onclick=
+   $('invite-create').onclick=
     ()=>action(
       async()=>{
         await S.apply(
