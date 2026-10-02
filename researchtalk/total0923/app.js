@@ -75,14 +75,50 @@
   const roomInfo=id=>
     data?.rooms.find(r=>r.id===id);
 
-  const roomName=r=>
-    r?.kind==='group'
-      ?'우리 모두'
-      :(member(
-        r?.a===data?.self
-          ?r?.b
-          :r?.a
-      )?.name||'참여자')+'님';
+const roomName=r=>{
+
+  if(!r){
+    return '대화';
+  }
+
+
+  if(r.kind==='group'){
+
+    /*
+      고정 전체방
+    */
+
+    if(r.id===S.GROUP){
+      return '우리 모두';
+    }
+
+
+    /*
+      사용자 지정 그룹방
+    */
+
+    return (
+      r.title||
+      '그룹 대화'
+    );
+
+  }
+
+
+  /*
+    개인대화
+  */
+
+  return (
+    member(
+      r.a===data?.self
+        ?r.b
+        :r.a
+    )?.name||
+    '참여자'
+  )+'님';
+
+};
 
   const connected=()=>
     info.status==='connected'&&!data?.loading;
